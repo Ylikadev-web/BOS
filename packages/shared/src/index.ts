@@ -1,5 +1,8 @@
 export type ExpedienteTipo = "venta_directa" | "proyecto" | "servicio";
 
+/** Sector del cliente / operación */
+export type SectorTipo = "gobierno" | "privado";
+
 export type ExpedienteEstado =
   | "prospecto"
   | "cotizacion"
@@ -83,6 +86,8 @@ export interface ExpedienteNegocio {
   clienteId: string;
   clienteNombre: string;
   tipo: ExpedienteTipo;
+  /** Gobierno o Privado */
+  sector: SectorTipo;
   valor: number;
   estado: ExpedienteEstado;
   avance: number;
@@ -118,6 +123,8 @@ export interface Cliente {
   nombre: string;
   rfc: string;
   industria: string;
+  /** Gobierno o Privado */
+  sector: SectorTipo;
   ejecutivo: string;
   expedientesActivos: number;
   valorCartera: number;

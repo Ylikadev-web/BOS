@@ -34,7 +34,7 @@ export default function InsightsPage() {
         {insights.map((insight) => (
           <Link
             key={`${insight.expedienteCodigo}-${insight.id}`}
-            href={`/operaciones/${insight.expedienteCodigo}`}
+            href={`/operaciones/ver/?codigo=${encodeURIComponent(insight.expedienteCodigo)}`}
             className={cn(
               "block rounded-2xl border p-5 transition hover:-translate-y-0.5 hover:shadow-md",
               insight.severidad === "critical" &&

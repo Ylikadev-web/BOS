@@ -12,13 +12,14 @@ import type {
   Cliente,
   ExpedienteNegocio,
   ExpedienteTipo,
+  SectorTipo,
 } from "@ylika/shared";
 import {
   clientes as seedClientes,
   expedientes as seedExpedientes,
 } from "@/data/seed";
 
-const STORAGE_KEY = "ylika-bos-v1";
+const STORAGE_KEY = "ylika-bos-v2";
 
 type StoreState = {
   clientes: Cliente[];
@@ -31,12 +32,14 @@ type YlikaStore = StoreState & {
     nombre: string;
     rfc?: string;
     industria?: string;
+    sector: SectorTipo;
     creditoDisponible?: number;
   }) => Cliente;
   addExpediente: (input: {
     nombre: string;
     clienteId: string;
     tipo: ExpedienteTipo;
+    sector: SectorTipo;
     valor: number;
   }) => ExpedienteNegocio;
   getExpedienteByCodigo: (codigo: string) => ExpedienteNegocio | undefined;
@@ -44,20 +47,30 @@ type YlikaStore = StoreState & {
 
 const Ctx = createContext<YlikaStore | null>(null);
 
+function migrateCliente(c: Cliente): Cliente {
+  return { ...c, sector: c.sector ?? "privado" };
+}
+
+function migrateExpediente(e: ExpedienteNegocio): ExpedienteNegocio {
+  return { ...e, sector: e.sector ?? "privado" };
+}
+
 function loadState(): StoreState {
   if (typeof window === "undefined") {
     return { clientes: seedClientes, expedientes: seedExpedientes };
   }
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw =
+      localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem("ylika-bos-v1");
     if (!raw) return { clientes: seedClientes, expedientes: seedExpedientes };
     const parsed = JSON.parse(raw) as Partial<StoreState>;
-    return {
-      clientes: parsed.clientes?.length ? parsed.clientes : seedClientes,
-      expedientes: parsed.expedientes?.length
-        ? parsed.expedientes
-        : seedExpedientes,
-    };
+    const clientes = (parsed.clientes?.length ? parsed.clientes : seedClientes).map(
+      migrateCliente,
+    );
+    const expedientes = (
+      parsed.expedientes?.length ? parsed.expedientes : seedExpedientes
+    ).map(migrateExpediente);
+    return { clientes, expedientes };
   } catch {
     return { clientes: seedClientes, expedientes: seedExpedientes };
   }
@@ -108,6 +121,7 @@ export function YlikaStoreProvider({ children }: { children: React.ReactNode }) 
       nombre: string;
       rfc?: string;
       industria?: string;
+      sector: SectorTipo;
       creditoDisponible?: number;
     }) => {
       const cliente: Cliente = {
@@ -119,6 +133,7 @@ export function YlikaStoreProvider({ children }: { children: React.ReactNode }) 
         nombre: input.nombre.trim(),
         rfc: input.rfc?.trim() || "XAXX010101000",
         industria: input.industria?.trim() || "General",
+        sector: input.sector,
         ejecutivo: "Ana Ruiz",
         expedientesActivos: 0,
         valorCartera: 0,
@@ -136,6 +151,7 @@ export function YlikaStoreProvider({ children }: { children: React.ReactNode }) 
       nombre: string;
       clienteId: string;
       tipo: ExpedienteTipo;
+      sector: SectorTipo;
       valor: number;
     }) => {
       const cliente = state.clientes.find((c) => c.id === input.clienteId);
@@ -146,6 +162,13 @@ export function YlikaStoreProvider({ children }: { children: React.ReactNode }) 
         state.expedientes.map((e) => e.codigo),
       );
 
+      const modalidadLabel =
+        input.tipo === "venta_directa"
+          ? "Venta Directa"
+          : input.tipo === "proyecto"
+            ? "Proyecto"
+            : "Servicio";
+
       const expediente: ExpedienteNegocio = {
         id: `exp-${crypto.randomUUID().slice(0, 8)}`,
         codigo,
@@ -153,6 +176,7 @@ export function YlikaStoreProvider({ children }: { children: React.ReactNode }) 
         clienteId: cliente.id,
         clienteNombre: cliente.nombre,
         tipo: input.tipo,
+        sector: input.sector,
         valor: input.valor,
         estado: "cotizacion",
         avance: 5,
@@ -180,12 +204,7 @@ export function YlikaStoreProvider({ children }: { children: React.ReactNode }) 
               id: "n-exp",
               tipo: "expediente",
               titulo: codigo,
-              subtitulo:
-                input.tipo === "venta_directa"
-                  ? "Venta Directa"
-                  : input.tipo === "proyecto"
-                    ? "Proyecto"
-                    : "Servicio",
+              subtitulo: `${modalidadLabel} · ${input.sector === "gobierno" ? "Gobierno" : "Privado"}`,
               estado: "activo",
               x: 380,
               y: 40,
@@ -220,7 +239,7 @@ export function YlikaStoreProvider({ children }: { children: React.ReactNode }) 
             id: "i1",
             severidad: "info",
             titulo: "Expediente creado",
-            descripcion: "Listo para cotizar y relacionar documentos.",
+            descripcion: `Modalidad ${modalidadLabel} · Tipo ${input.sector === "gobierno" ? "Gobierno" : "Privado"}.`,
             impacto: "Sin riesgo operativo aún.",
             recomendacion: "Carga la cotización o genera el pedido inicial.",
           },
@@ -248,7 +267,8 @@ export function YlikaStoreProvider({ children }: { children: React.ReactNode }) 
   const getExpedienteByCodigo = useCallback(
     (codigo: string) =>
       state.expedientes.find(
-        (e) => e.codigo.toLowerCase() === decodeURIComponent(codigo).toLowerCase(),
+        (e) =>
+          e.codigo.toLowerCase() === decodeURIComponent(codigo).toLowerCase(),
       ),
     [state.expedientes],
   );

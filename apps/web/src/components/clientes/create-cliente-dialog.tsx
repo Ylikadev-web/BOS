@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import type { SectorTipo } from "@ylika/shared";
 import { useYlikaStore } from "@/lib/store";
 import {
   Dialog,
@@ -13,6 +14,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function CreateClienteDialog({
   open,
@@ -27,6 +35,7 @@ export function CreateClienteDialog({
   const [nombre, setNombre] = useState("");
   const [rfc, setRfc] = useState("");
   const [industria, setIndustria] = useState("");
+  const [sector, setSector] = useState<SectorTipo>("privado");
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,15 +43,21 @@ export function CreateClienteDialog({
       toast.error("El nombre del cliente es obligatorio");
       return;
     }
+    if (!sector) {
+      toast.error("Selecciona el tipo: Gobierno o Privado");
+      return;
+    }
     const cliente = addCliente({
       nombre,
       rfc,
       industria,
+      sector,
     });
     toast.success(`Cliente ${cliente.codigo} creado`);
     setNombre("");
     setRfc("");
     setIndustria("");
+    setSector("privado");
     onOpenChange(false);
     onCreated?.(cliente.id);
   };
@@ -67,7 +82,23 @@ export function CreateClienteDialog({
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Ej. SHAMOSH"
               autoFocus
+              required
             />
+          </div>
+          <div className="space-y-2">
+            <Label>Tipo</Label>
+            <Select
+              value={sector}
+              onValueChange={(v) => setSector(v as SectorTipo)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Gobierno o Privado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="gobierno">Gobierno</SelectItem>
+                <SelectItem value="privado">Privado</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="cli-rfc">RFC</Label>

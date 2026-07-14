@@ -7,6 +7,7 @@ import type { ExpedienteNegocio } from "@ylika/shared";
 import { formatCurrency, formatPercent } from "@ylika/shared";
 import { cn } from "@/lib/utils";
 import { StatusPill } from "@/components/operaciones/status-pill";
+import { expedienteHref } from "@/lib/routes";
 
 export function ExpedienteCard({
   expediente,
@@ -22,7 +23,7 @@ export function ExpedienteCard({
       transition={{ delay: index * 0.06, duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
     >
       <Link
-        href={`/operaciones/${expediente.codigo}`}
+        href={expedienteHref(expediente.codigo)}
         className="group block rounded-2xl border border-border/80 bg-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:border-ylika-teal/30 hover:shadow-[0_12px_32px_rgba(15,23,42,0.08)]"
       >
         <div className="flex items-start justify-between gap-3">
@@ -39,6 +40,8 @@ export function ExpedienteCard({
                 : expediente.tipo === "proyecto"
                   ? "Proyecto"
                   : "Servicio"}
+              {" · "}
+              {expediente.sector === "gobierno" ? "Gobierno" : "Privado"}
             </p>
           </div>
           <div className="flex size-8 items-center justify-center rounded-full bg-secondary text-muted-foreground transition group-hover:bg-ylika-teal-soft group-hover:text-ylika-teal">

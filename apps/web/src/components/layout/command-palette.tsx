@@ -73,7 +73,7 @@ export function CommandPalette({
           {expedientes.map((exp) => (
             <CommandItem
               key={exp.id}
-              onSelect={() => go(`/operaciones/${exp.codigo}`)}
+              onSelect={() => go(`/operaciones/ver/?codigo=${encodeURIComponent(exp.codigo)}`)}
             >
               <BriefcaseBusiness />
               <div className="flex flex-col">

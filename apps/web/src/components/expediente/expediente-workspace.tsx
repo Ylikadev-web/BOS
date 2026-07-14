@@ -41,7 +41,8 @@ export function ExpedienteWorkspace({
                 : expediente.tipo === "proyecto"
                   ? "Proyecto"
                   : "Servicio"}{" "}
-              · {expediente.ejecutivo}
+              · {expediente.sector === "gobierno" ? "Gobierno" : "Privado"} ·{" "}
+              {expediente.ejecutivo}
             </p>
           </div>
 

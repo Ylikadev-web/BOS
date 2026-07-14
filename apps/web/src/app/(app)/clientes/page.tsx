@@ -57,7 +57,7 @@ export default function ClientesPage() {
                     {c.nombre}
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    {c.industria} · {c.rfc}
+                    {c.industria} · {c.sector === "gobierno" ? "Gobierno" : "Privado"} · {c.rfc}
                   </p>
                 </div>
                 <span
@@ -97,7 +97,7 @@ export default function ClientesPage() {
                 {exps.map((e) => (
                   <Link
                     key={e.id}
-                    href={`/operaciones/${e.codigo}`}
+                    href={`/operaciones/ver/?codigo=${encodeURIComponent(e.codigo)}`}
                     className="rounded-lg bg-secondary px-2.5 py-1 text-xs font-medium text-foreground transition hover:bg-ylika-teal-soft hover:text-ylika-teal"
                   >
                     {e.codigo}

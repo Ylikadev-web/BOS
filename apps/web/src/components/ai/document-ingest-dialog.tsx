@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -13,6 +13,8 @@ import {
   Upload,
 } from "lucide-react";
 import { toast } from "sonner";
+import type { DocumentoAiResultado } from "@ylika/shared";
+import { formatCurrency } from "@ylika/shared";
 import {
   Dialog,
   DialogContent,
@@ -22,8 +24,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { documentoAiDemo } from "@/data/seed";
-import { formatCurrency } from "@ylika/shared";
+import { analyzeDocument, isAllowedDocument } from "@/lib/ai-ingest";
+import { expedienteHref } from "@/lib/routes";
 
 type Step = "drop" | "analyzing" | "result";
 
@@ -35,25 +37,64 @@ export function DocumentIngestDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const router = useRouter();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<Step>("drop");
-  const result = documentoAiDemo;
+  const [result, setResult] = useState<DocumentoAiResultado | null>(null);
+  const [dragging, setDragging] = useState(false);
 
-  const reset = () => setStep("drop");
+  const reset = () => {
+    setStep("drop");
+    setResult(null);
+    setDragging(false);
+  };
 
   const handleClose = (next: boolean) => {
     if (!next) reset();
     onOpenChange(next);
   };
 
-  const simulateIngest = () => {
+  const processFile = async (file: File) => {
+    if (!isAllowedDocument(file)) {
+      toast.error("Formato no soportado. Usa PDF, XML, Excel, imagen o correo.");
+      return;
+    }
     setStep("analyzing");
-    window.setTimeout(() => setStep("result"), 1600);
+    try {
+      // Small delay so the analyzing state is visible
+      const [analyzed] = await Promise.all([
+        analyzeDocument(file),
+        new Promise((r) => setTimeout(r, 900)),
+      ]);
+      setResult(analyzed);
+      setStep("result");
+      toast.success("Documento analizado");
+    } catch {
+      toast.error("No se pudo analizar el documento");
+      setStep("drop");
+    }
+  };
+
+  const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (file) void processFile(file);
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) void processFile(file);
   };
 
   const associate = () => {
-    toast.success(`Documento asociado a ${result.expedienteSugerido?.codigo}`);
+    if (!result?.expedienteSugerido?.codigo) {
+      toast.error("No hay expediente sugerido");
+      return;
+    }
+    toast.success(`Documento asociado a ${result.expedienteSugerido.codigo}`);
     handleClose(false);
-    router.push(`/operaciones/${result.expedienteSugerido?.codigo}`);
+    router.push(expedienteHref(result.expedienteSugerido.codigo));
   };
 
   return (
@@ -69,6 +110,14 @@ export function DocumentIngestDialog({
           </DialogDescription>
         </DialogHeader>
 
+        <input
+          ref={inputRef}
+          type="file"
+          className="hidden"
+          accept=".pdf,.xml,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.webp,.gif,.eml,.msg,.txt,application/pdf,text/xml,image/*"
+          onChange={onInputChange}
+        />
+
         <AnimatePresence mode="wait">
           {step === "drop" && (
             <motion.div
@@ -80,10 +129,24 @@ export function DocumentIngestDialog({
             >
               <button
                 type="button"
-                onClick={simulateIngest}
-                className="flex w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-ylika-teal/40 bg-ylika-teal-soft/40 px-6 py-12 text-center transition hover:border-ylika-teal hover:bg-ylika-teal-soft/70"
+                onClick={() => inputRef.current?.click()}
+                onDragEnter={(e) => {
+                  e.preventDefault();
+                  setDragging(true);
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragging(true);
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={onDrop}
+                className={`flex w-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed px-6 py-12 text-center transition ${
+                  dragging
+                    ? "border-ylika-teal bg-ylika-teal-soft"
+                    : "border-ylika-teal/40 bg-ylika-teal-soft/40 hover:border-ylika-teal hover:bg-ylika-teal-soft/70"
+                }`}
               >
-                <div className="flex size-12 items-center justify-center rounded-full bg-white shadow-sm">
+                <div className="flex size-12 items-center justify-center rounded-full bg-card shadow-sm">
                   <Upload className="size-5 text-ylika-teal" />
                 </div>
                 <div>
@@ -91,7 +154,7 @@ export function DocumentIngestDialog({
                     Suelta un documento o haz clic
                   </p>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    Demo: cotizacion_cemex.pdf
+                    PDF · XML · Excel · Imagen · Correo
                   </p>
                 </div>
               </button>
@@ -131,7 +194,7 @@ export function DocumentIngestDialog({
             </motion.div>
           )}
 
-          {step === "result" && (
+          {step === "result" && result && (
             <motion.div
               key="result"
               initial={{ opacity: 0, y: 8 }}
@@ -142,16 +205,26 @@ export function DocumentIngestDialog({
               <div className="rounded-xl border bg-card p-4">
                 <div className="mb-3 flex items-center gap-2">
                   <CheckCircle2 className="size-4 text-ylika-success" />
-                  <span className="text-sm font-medium">{result.archivo}</span>
-                  <Badge className="ml-auto bg-ylika-teal-soft text-ylika-teal hover:bg-ylika-teal-soft">
+                  <span className="truncate text-sm font-medium">
+                    {result.archivo}
+                  </span>
+                  <Badge className="ml-auto shrink-0 bg-ylika-teal-soft text-ylika-teal hover:bg-ylika-teal-soft">
                     {result.clasificacion}
                   </Badge>
                 </div>
                 <dl className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <dt className="text-muted-foreground">Proveedor</dt>
-                    <dd className="font-medium">{result.proveedor}</dd>
-                  </div>
+                  {result.proveedor && (
+                    <div>
+                      <dt className="text-muted-foreground">Proveedor</dt>
+                      <dd className="font-medium">{result.proveedor}</dd>
+                    </div>
+                  )}
+                  {result.cliente && (
+                    <div>
+                      <dt className="text-muted-foreground">Cliente</dt>
+                      <dd className="font-medium">{result.cliente}</dd>
+                    </div>
+                  )}
                   <div>
                     <dt className="text-muted-foreground">Monto</dt>
                     <dd className="font-medium">
@@ -160,40 +233,47 @@ export function DocumentIngestDialog({
                   </div>
                   <div>
                     <dt className="text-muted-foreground">Concepto</dt>
-                    <dd className="font-medium">{result.concepto}</dd>
+                    <dd className="font-medium">{result.concepto ?? "—"}</dd>
                   </div>
-                  <div>
-                    <dt className="text-muted-foreground">Proyecto</dt>
-                    <dd className="font-medium">{result.proyecto}</dd>
-                  </div>
+                  {result.proyecto && (
+                    <div className="col-span-2">
+                      <dt className="text-muted-foreground">Proyecto</dt>
+                      <dd className="font-medium">{result.proyecto}</dd>
+                    </div>
+                  )}
                 </dl>
               </div>
 
-              <div className="rounded-xl border border-ylika-orange/30 bg-ylika-orange-soft p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-ylika-orange">
-                  Posible coincidencia
-                </p>
-                <p className="mt-1 font-[family-name:var(--font-display)] text-lg font-semibold">
-                  {result.expedienteSugerido?.codigo}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {result.expedienteSugerido?.nombre} · Confianza{" "}
-                  {Math.round((result.expedienteSugerido?.confianza ?? 0) * 100)}
-                  %
-                </p>
-                <p className="mt-3 text-sm">¿Desea asociar este documento?</p>
-                <div className="mt-3 flex gap-2">
-                  <Button
-                    className="bg-ylika-teal hover:bg-ylika-teal/90"
-                    onClick={associate}
-                  >
-                    Asociar a expediente
-                  </Button>
-                  <Button variant="outline" onClick={() => handleClose(false)}>
-                    Descartar
-                  </Button>
+              {result.expedienteSugerido ? (
+                <div className="rounded-xl border border-ylika-orange/30 bg-ylika-orange-soft p-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-ylika-orange">
+                    Posible coincidencia
+                  </p>
+                  <p className="mt-1 font-[family-name:var(--font-display)] text-lg font-semibold">
+                    {result.expedienteSugerido.codigo}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {result.expedienteSugerido.nombre} · Confianza{" "}
+                    {Math.round(result.expedienteSugerido.confianza * 100)}%
+                  </p>
+                  <p className="mt-3 text-sm">¿Desea asociar este documento?</p>
+                  <div className="mt-3 flex gap-2">
+                    <Button
+                      className="bg-ylika-teal hover:bg-ylika-teal/90"
+                      onClick={associate}
+                    >
+                      Asociar a expediente
+                    </Button>
+                    <Button variant="outline" onClick={() => handleClose(false)}>
+                      Descartar
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <Button variant="outline" onClick={() => handleClose(false)}>
+                  Cerrar
+                </Button>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import type { ExpedienteTipo } from "@ylika/shared";
+import type { ExpedienteTipo, SectorTipo } from "@ylika/shared";
 import { useYlikaStore } from "@/lib/store";
+import { expedienteHref } from "@/lib/routes";
 import {
   Dialog,
   DialogContent,
@@ -37,7 +38,8 @@ export function CreateExpedienteDialog({
   const { clientes, addExpediente } = useYlikaStore();
   const [nombre, setNombre] = useState("");
   const [clienteId, setClienteId] = useState(defaultClienteId ?? "");
-  const [tipo, setTipo] = useState<ExpedienteTipo>("proyecto");
+  const [modalidad, setModalidad] = useState<ExpedienteTipo>("venta_directa");
+  const [sector, setSector] = useState<SectorTipo>("privado");
   const [valor, setValor] = useState("150000");
   const [createClienteOpen, setCreateClienteOpen] = useState(false);
 
@@ -49,32 +51,52 @@ export function CreateExpedienteDialog({
     if (open && !clienteId && clientes[0]) setClienteId(clientes[0].id);
   }, [open, clienteId, clientes]);
 
+  useEffect(() => {
+    const cli = clientes.find((c) => c.id === clienteId);
+    if (cli?.sector) setSector(cli.sector);
+  }, [clienteId, clientes]);
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nombre.trim()) {
-      toast.error("El nombre del expediente es obligatorio");
-      return;
-    }
-    if (!clienteId) {
-      toast.error("Selecciona o crea un cliente primero");
-      return;
-    }
-    const monto = Number(valor.replace(/,/g, ""));
-    if (!monto || monto <= 0) {
-      toast.error("Ingresa un valor válido");
-      return;
-    }
+    try {
+      if (!nombre.trim()) {
+        toast.error("El nombre del expediente es obligatorio");
+        return;
+      }
+      if (!clienteId) {
+        toast.error("Selecciona o crea un cliente primero");
+        return;
+      }
+      if (!sector) {
+        toast.error("Selecciona Tipo: Gobierno o Privado");
+        return;
+      }
+      if (!modalidad) {
+        toast.error("Selecciona la modalidad de operación");
+        return;
+      }
+      const monto = Number(String(valor).replace(/[^0-9.]/g, ""));
+      if (!monto || monto <= 0) {
+        toast.error("Ingresa un valor válido");
+        return;
+      }
 
-    const exp = addExpediente({
-      nombre,
-      clienteId,
-      tipo,
-      valor: monto,
-    });
-    toast.success(`${exp.codigo} creado`);
-    onOpenChange(false);
-    setNombre("");
-    router.push(`/operaciones/${exp.codigo}`);
+      const exp = addExpediente({
+        nombre,
+        clienteId,
+        tipo: modalidad,
+        sector,
+        valor: monto,
+      });
+      toast.success(`${exp.codigo} creado`);
+      onOpenChange(false);
+      setNombre("");
+      setModalidad("venta_directa");
+      setValor("150000");
+      router.push(expedienteHref(exp.codigo));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "No se pudo crear");
+    }
   };
 
   return (
@@ -94,7 +116,7 @@ export function CreateExpedienteDialog({
               <Label>Cliente</Label>
               <div className="flex gap-2">
                 <Select value={clienteId} onValueChange={setClienteId}>
-                  <SelectTrigger className="flex-1">
+                  <SelectTrigger className="w-full flex-1">
                     <SelectValue placeholder="Seleccionar cliente" />
                   </SelectTrigger>
                   <SelectContent>
@@ -121,35 +143,52 @@ export function CreateExpedienteDialog({
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 placeholder="Ej. PLANTA NORTE"
+                required
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label>Tipo</Label>
                 <Select
-                  value={tipo}
-                  onValueChange={(v) => setTipo(v as ExpedienteTipo)}
+                  value={sector}
+                  onValueChange={(v) => setSector(v as SectorTipo)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="proyecto">Proyecto</SelectItem>
-                    <SelectItem value="venta_directa">Venta Directa</SelectItem>
-                    <SelectItem value="servicio">Servicio</SelectItem>
+                    <SelectItem value="gobierno">Gobierno</SelectItem>
+                    <SelectItem value="privado">Privado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="exp-valor">Valor</Label>
-                <Input
-                  id="exp-valor"
-                  inputMode="numeric"
-                  value={valor}
-                  onChange={(e) => setValor(e.target.value)}
-                  placeholder="150000"
-                />
+                <Label>Modalidad</Label>
+                <Select
+                  value={modalidad}
+                  onValueChange={(v) => setModalidad(v as ExpedienteTipo)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="venta_directa">Venta Directa</SelectItem>
+                    <SelectItem value="proyecto">Proyecto</SelectItem>
+                    <SelectItem value="servicio">Servicio</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="exp-valor">Valor (MXN)</Label>
+              <Input
+                id="exp-valor"
+                inputMode="numeric"
+                value={valor}
+                onChange={(e) => setValor(e.target.value)}
+                placeholder="150000"
+                required
+              />
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

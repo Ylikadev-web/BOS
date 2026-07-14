@@ -1,22 +1,23 @@
 "use client";
 
-import { notFound } from "next/navigation";
-import { useYlikaStore } from "@/lib/store";
-import { ExpedienteWorkspace } from "@/components/expediente/expediente-workspace";
+import { useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { expedienteHref } from "@/lib/routes";
 
-export function ExpedientePageClient({ codigo }: { codigo: string }) {
-  const { getExpedienteByCodigo, ready } = useYlikaStore();
-  const expediente = getExpedienteByCodigo(codigo);
+/** Legacy /operaciones/EXP-xxx → /operaciones/ver?codigo= (GitHub Pages safe) */
+export default function LegacyExpedienteRedirect() {
+  const params = useParams<{ codigo: string }>();
+  const router = useRouter();
 
-  if (!ready) {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground">
-        Cargando expediente…
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (params.codigo) {
+      router.replace(expedienteHref(params.codigo));
+    }
+  }, [params.codigo, router]);
 
-  if (!expediente) notFound();
-
-  return <ExpedienteWorkspace expediente={expediente} />;
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground">
+      Abriendo expediente…
+    </div>
+  );
 }
