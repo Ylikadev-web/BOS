@@ -24,7 +24,7 @@ export function ExpedienteWorkspace({
       <motion.header
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-border/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+        className="rounded-2xl border border-border/80 bg-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
       >
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
@@ -68,18 +68,24 @@ export function ExpedienteWorkspace({
       </motion.header>
 
       <div className="grid gap-4 xl:grid-cols-[240px_minmax(0,1fr)_280px]">
-        <aside className="rounded-2xl border border-border/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-          <ExpedienteTimeline events={expediente.timeline} />
+        <aside className="rounded-2xl border border-border/80 bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+          <ExpedienteTimeline
+            events={expediente.timeline}
+            expedienteCodigo={expediente.codigo}
+            clienteNombre={expediente.clienteNombre}
+          />
         </aside>
 
         <section className="min-h-[520px]">
           <BusinessGraph
             nodes={expediente.graph.nodes}
             edges={expediente.graph.edges}
+            expedienteCodigo={expediente.codigo}
+            clienteNombre={expediente.clienteNombre}
           />
         </section>
 
-        <aside className="rounded-2xl border border-border/80 bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <aside className="rounded-2xl border border-border/80 bg-card p-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
           <AiInsightsPanel
             insights={expediente.insights}
             resumen={expediente.resumen}

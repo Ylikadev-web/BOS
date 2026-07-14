@@ -1,9 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import { AlertTriangle, Info, ShieldAlert } from "lucide-react";
-import { expedientes } from "@/data/seed";
+import { useYlikaStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 export default function InsightsPage() {
+  const { expedientes } = useYlikaStore();
   const insights = expedientes.flatMap((e) =>
     e.insights.map((insight) => ({
       ...insight,
@@ -36,15 +39,16 @@ export default function InsightsPage() {
               "block rounded-2xl border p-5 transition hover:-translate-y-0.5 hover:shadow-md",
               insight.severidad === "critical" &&
                 "border-ylika-orange/40 bg-ylika-orange-soft",
-              insight.severidad === "warning" && "border-amber-200 bg-amber-50",
-              insight.severidad === "info" && "border-border/80 bg-white",
+              insight.severidad === "warning" &&
+                "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40",
+              insight.severidad === "info" && "border-border/80 bg-card",
             )}
           >
             <div className="flex items-start gap-3">
               {insight.severidad === "critical" ? (
-                <ShieldAlert className="mt-0.5 size-5 text-amber-700" />
+                <ShieldAlert className="mt-0.5 size-5 text-amber-700 dark:text-amber-400" />
               ) : insight.severidad === "warning" ? (
-                <AlertTriangle className="mt-0.5 size-5 text-amber-600" />
+                <AlertTriangle className="mt-0.5 size-5 text-amber-600 dark:text-amber-400" />
               ) : (
                 <Info className="mt-0.5 size-5 text-ylika-teal" />
               )}

@@ -23,7 +23,7 @@ export function ExpedienteCard({
     >
       <Link
         href={`/operaciones/${expediente.codigo}`}
-        className="group block rounded-2xl border border-border/80 bg-white p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:border-ylika-teal/30 hover:shadow-[0_12px_32px_rgba(15,23,42,0.08)]"
+        className="group block rounded-2xl border border-border/80 bg-card p-5 shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:border-ylika-teal/30 hover:shadow-[0_12px_32px_rgba(15,23,42,0.08)]"
       >
         <div className="flex items-start justify-between gap-3">
           <div>

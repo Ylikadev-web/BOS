@@ -7,6 +7,7 @@ import {
   Building2,
   Command,
   LayoutDashboard,
+  Plus,
   Search,
   Sparkles,
   Users,
@@ -16,6 +17,8 @@ import { Button } from "@/components/ui/button";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { DocumentIngestDialog } from "@/components/ai/document-ingest-dialog";
 import { YlikaMark } from "@/components/layout/ylika-mark";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { CreateExpedienteDialog } from "@/components/operaciones/create-expediente-dialog";
 import { useState } from "react";
 
 const nav = [
@@ -30,10 +33,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [cmdOpen, setCmdOpen] = useState(false);
   const [ingestOpen, setIngestOpen] = useState(false);
+  const [createExpOpen, setCreateExpOpen] = useState(false);
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-40 border-b border-border/70 bg-white/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b border-border/70 bg-card/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-[1600px] items-center gap-6 px-4 sm:px-6">
           <Link href="/workspace" className="flex items-center gap-2.5 shrink-0">
             <YlikaMark className="size-7" />
@@ -65,7 +69,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -80,12 +84,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Button>
             <Button
               size="sm"
-              className="gap-2 bg-ylika-teal hover:bg-ylika-teal/90"
+              variant="outline"
+              className="hidden md:inline-flex gap-1.5"
+              onClick={() => setCreateExpOpen(true)}
+            >
+              <Plus className="size-3.5" />
+              Expediente
+            </Button>
+            <Button
+              size="sm"
+              className="gap-2 bg-ylika-teal hover:bg-ylika-teal/90 text-white"
               onClick={() => setIngestOpen(true)}
             >
               <Sparkles className="size-3.5" />
-              Ingestar IA
+              <span className="hidden sm:inline">Ingestar IA</span>
             </Button>
+            <ThemeToggle />
             <Button
               variant="ghost"
               size="icon-sm"
@@ -107,6 +121,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
       <DocumentIngestDialog open={ingestOpen} onOpenChange={setIngestOpen} />
+      <CreateExpedienteDialog open={createExpOpen} onOpenChange={setCreateExpOpen} />
     </div>
   );
 }

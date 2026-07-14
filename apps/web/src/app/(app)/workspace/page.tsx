@@ -1,18 +1,21 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, BriefcaseBusiness, Sparkles, Users } from "lucide-react";
-import { expedientes } from "@/data/seed";
 import { ExpedienteCard } from "@/components/operaciones/expediente-card";
 import { formatCurrency } from "@ylika/shared";
+import { useYlikaStore } from "@/lib/store";
 
 export default function WorkspacePage() {
+  const { expedientes } = useYlikaStore();
   const activos = expedientes.filter((e) => e.estado !== "cerrado");
   const enRiesgo = expedientes.filter((e) => e.estado === "riesgo").length;
   const valorPortafolio = activos.reduce((sum, e) => sum + e.valor, 0);
 
   return (
     <div className="space-y-8">
-      <section className="relative overflow-hidden rounded-3xl border border-border/70 bg-white px-6 py-8 sm:px-10 sm:py-10">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(13,148,136,0.12),transparent_55%),radial-gradient(ellipse_at_bottom_left,rgba(245,158,11,0.1),transparent_50%)]" />
+      <section className="relative overflow-hidden rounded-3xl border border-border/70 bg-card px-6 py-8 sm:px-10 sm:py-10">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,color-mix(in_oklab,var(--ylika-teal)_18%,transparent),transparent_55%),radial-gradient(ellipse_at_bottom_left,color-mix(in_oklab,var(--ylika-orange)_14%,transparent),transparent_50%)]" />
         <div className="relative max-w-2xl">
           <p className="font-[family-name:var(--font-display)] text-sm font-semibold tracking-[0.2em] text-ylika-teal uppercase">
             YLIKA
@@ -34,7 +37,7 @@ export default function WorkspacePage() {
             </Link>
             <Link
               href="/operaciones/EXP-000875"
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-medium transition hover:bg-secondary"
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium transition hover:bg-secondary"
             >
               Abrir PLANTA NORTE
             </Link>
@@ -97,7 +100,7 @@ function Metric({
   value: string;
 }) {
   return (
-    <div className="rounded-2xl border border-border/80 bg-white p-5">
+    <div className="rounded-2xl border border-border/80 bg-card p-5">
       <div className="flex items-center gap-2 text-muted-foreground">
         {icon}
         <span className="text-xs font-medium uppercase tracking-wide">
