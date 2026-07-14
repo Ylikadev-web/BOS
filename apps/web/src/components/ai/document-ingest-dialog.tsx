@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -14,9 +14,15 @@ import {
   Sparkles,
   Upload,
   AlertTriangle,
+  FolderPlus,
+  Link2,
 } from "lucide-react";
 import { toast } from "sonner";
-import type { DocumentoAiResultado } from "@ylika/shared";
+import type {
+  DocumentoAiResultado,
+  ExpedienteTipo,
+  SectorTipo,
+} from "@ylika/shared";
 import { formatCurrency } from "@ylika/shared";
 import {
   Dialog,
@@ -30,6 +36,13 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   analyzeDocument,
   getGeminiApiKey,
   isAllowedDocument,
@@ -38,7 +51,43 @@ import {
 import { expedienteHref } from "@/lib/routes";
 import { useYlikaStore } from "@/lib/store";
 
-type Step = "drop" | "analyzing" | "result";
+type Step = "drop" | "analyzing" | "result" | "create";
+
+function defaultsFromDoc(doc: DocumentoAiResultado) {
+  const clienteNombre =
+    doc.cliente?.trim() ||
+    (doc.proyecto && /planta|norte|bimbo|shamosh|cemex/i.test(doc.proyecto)
+      ? doc.proyecto
+      : "") ||
+    doc.proveedor?.trim() ||
+    "Nuevo cliente";
+
+  const expedienteNombre =
+    doc.proyecto?.trim() ||
+    doc.concepto?.trim() ||
+    `${doc.clasificacion} · ${doc.archivo}`.slice(0, 80);
+
+  const lower = `${doc.clasificacion} ${doc.concepto} ${doc.resumen}`.toLowerCase();
+  const tipo: ExpedienteTipo = /proyecto|obra|planta/.test(lower)
+    ? "proyecto"
+    : /servicio|mantenimiento|soporte/.test(lower)
+      ? "servicio"
+      : "venta_directa";
+
+  const sector: SectorTipo =
+    /gobierno|público|publica|municipio|secretaria/.test(lower)
+      ? "gobierno"
+      : "privado";
+
+  return {
+    clienteNombre,
+    expedienteNombre,
+    valor: String(doc.monto && doc.monto > 0 ? doc.monto : ""),
+    rfc: doc.rfcReceptor || doc.rfcEmisor || "",
+    tipo,
+    sector,
+  };
+}
 
 export function DocumentIngestDialog({
   open,
@@ -48,7 +97,7 @@ export function DocumentIngestDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const router = useRouter();
-  const { runAction, expedientes } = useYlikaStore();
+  const { runAction, expedientes, createFromDocumento } = useYlikaStore();
   const inputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<Step>("drop");
   const [result, setResult] = useState<DocumentoAiResultado | null>(null);
@@ -56,18 +105,39 @@ export function DocumentIngestDialog({
   const [showKey, setShowKey] = useState(false);
   const [apiKey, setApiKey] = useState("");
   const [hasKey, setHasKey] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  const [clienteNombre, setClienteNombre] = useState("");
+  const [expedienteNombre, setExpedienteNombre] = useState("");
+  const [valor, setValor] = useState("");
+  const [rfc, setRfc] = useState("");
+  const [tipo, setTipo] = useState<ExpedienteTipo>("venta_directa");
+  const [sector, setSector] = useState<SectorTipo>("privado");
 
   const reset = () => {
     setStep("drop");
     setResult(null);
     setDragging(false);
     setShowKey(false);
+    setCreating(false);
   };
 
   const handleClose = (next: boolean) => {
     if (!next) reset();
     onOpenChange(next);
   };
+
+  useEffect(() => {
+    if (result && step === "create") {
+      const d = defaultsFromDoc(result);
+      setClienteNombre(d.clienteNombre);
+      setExpedienteNombre(d.expedienteNombre);
+      setValor(d.valor);
+      setRfc(d.rfc);
+      setTipo(d.tipo);
+      setSector(d.sector);
+    }
+  }, [result, step]);
 
   const onOpenKey = () => {
     setApiKey(getGeminiApiKey());
@@ -150,6 +220,40 @@ export function DocumentIngestDialog({
     router.push(expedienteHref(result.expedienteSugerido.codigo));
   };
 
+  const create = () => {
+    if (!result) return;
+    if (!clienteNombre.trim()) {
+      toast.error("Indica el nombre del cliente");
+      return;
+    }
+    if (!expedienteNombre.trim()) {
+      toast.error("Indica el nombre del expediente");
+      return;
+    }
+    const monto = Number(String(valor).replace(/[^0-9.]/g, "")) || 0;
+    setCreating(true);
+    try {
+      const { expediente, cliente } = createFromDocumento({
+        documento: result,
+        clienteNombre,
+        expedienteNombre,
+        valor: monto,
+        sector,
+        tipo,
+        rfc,
+      });
+      toast.success(
+        `${expediente.codigo} creado · ${cliente.nombre} · documento asociado`,
+      );
+      handleClose(false);
+      router.push(expedienteHref(expediente.codigo));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "No se pudo crear");
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const providerLabel = (r: DocumentoAiResultado) => {
     if (r.provider === "gemini") return `Gemini · ${r.model ?? "2.5 Flash"}`;
     if (r.provider === "api") return "API YLIKA + Gemini";
@@ -159,14 +263,14 @@ export function DocumentIngestDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-[family-name:var(--font-display)]">
             Ingestión con IA
           </DialogTitle>
           <DialogDescription>
-            Gemini analiza PDF, XML CFDI, Excel, imagen o correo: clasifica,
-            extrae montos/RFCs y sugiere el expediente.
+            Analiza el documento y crea cliente + expediente, o asócialo a uno
+            existente.
           </DialogDescription>
         </DialogHeader>
 
@@ -278,11 +382,7 @@ export function DocumentIngestDialog({
                   autoComplete="off"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Se guarda solo en este navegador. Modelo:{" "}
-                  <span className="font-medium text-foreground">
-                    gemini-2.5-flash
-                  </span>{" "}
-                  (óptimo para documentos). Obtén una clave en{" "}
+                  Se guarda solo en este navegador. Obtén una clave en{" "}
                   <a
                     className="text-ylika-teal underline"
                     href="https://aistudio.google.com/apikey"
@@ -324,7 +424,7 @@ export function DocumentIngestDialog({
               <Loader2 className="size-8 animate-spin text-ylika-teal" />
               <p className="font-medium">Gemini analizando documento…</p>
               <p className="text-sm text-muted-foreground">
-                Clasificando · Extrayendo · Emparejando expediente
+                Clasificando · Extrayendo · Preparando expediente
               </p>
             </motion.div>
           )}
@@ -376,11 +476,7 @@ export function DocumentIngestDialog({
                     <dt className="text-muted-foreground">Monto</dt>
                     <dd className="font-medium">
                       {result.monto != null
-                        ? `${formatCurrency(result.monto)}${
-                            result.moneda && result.moneda !== "MXN"
-                              ? ` ${result.moneda}`
-                              : ""
-                          }`
+                        ? formatCurrency(result.monto)
                         : "—"}
                     </dd>
                   </div>
@@ -388,46 +484,13 @@ export function DocumentIngestDialog({
                     <dt className="text-muted-foreground">Concepto</dt>
                     <dd className="font-medium">{result.concepto ?? "—"}</dd>
                   </div>
-                  {result.fecha && (
-                    <div>
-                      <dt className="text-muted-foreground">Fecha</dt>
-                      <dd className="font-medium">{result.fecha}</dd>
-                    </div>
-                  )}
                   {result.proyecto && (
-                    <div>
+                    <div className="col-span-2">
                       <dt className="text-muted-foreground">Proyecto</dt>
                       <dd className="font-medium">{result.proyecto}</dd>
                     </div>
                   )}
-                  {result.rfcEmisor && (
-                    <div>
-                      <dt className="text-muted-foreground">RFC emisor</dt>
-                      <dd className="font-mono text-xs font-medium">
-                        {result.rfcEmisor}
-                      </dd>
-                    </div>
-                  )}
-                  {result.rfcReceptor && (
-                    <div>
-                      <dt className="text-muted-foreground">RFC receptor</dt>
-                      <dd className="font-mono text-xs font-medium">
-                        {result.rfcReceptor}
-                      </dd>
-                    </div>
-                  )}
                 </dl>
-
-                {result.entidadesDetectadas &&
-                  result.entidadesDetectadas.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {result.entidadesDetectadas.slice(0, 8).map((e) => (
-                        <Badge key={e} variant="secondary" className="text-[10px]">
-                          {e}
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
 
                 {result.riesgos && result.riesgos.length > 0 && (
                   <div className="mt-3 space-y-1 rounded-lg border border-amber-200/80 bg-amber-50/80 p-3 dark:border-amber-900 dark:bg-amber-950/30">
@@ -444,10 +507,23 @@ export function DocumentIngestDialog({
                 )}
               </div>
 
-              {result.expedienteSugerido ? (
+              <div className="rounded-xl border border-ylika-teal/30 bg-ylika-teal-soft/50 p-4 space-y-3">
+                <p className="text-sm font-medium">
+                  Acción principal: convertir este documento en operación
+                </p>
+                <Button
+                  className="w-full gap-2 bg-ylika-teal hover:bg-ylika-teal/90"
+                  onClick={() => setStep("create")}
+                >
+                  <FolderPlus className="size-4" />
+                  Crear cliente + expediente
+                </Button>
+              </div>
+
+              {result.expedienteSugerido && (
                 <div className="rounded-xl border border-ylika-orange/30 bg-ylika-orange-soft p-4">
                   <p className="text-xs font-medium uppercase tracking-wide text-ylika-orange">
-                    Posible coincidencia
+                    O asociar a existente
                   </p>
                   <p className="mt-1 font-[family-name:var(--font-display)] text-lg font-semibold">
                     {result.expedienteSugerido.codigo}
@@ -456,32 +532,134 @@ export function DocumentIngestDialog({
                     {result.expedienteSugerido.nombre} · Confianza{" "}
                     {Math.round(result.expedienteSugerido.confianza * 100)}%
                   </p>
-                  <p className="mt-3 text-sm">¿Desea asociar este documento?</p>
-                  <div className="mt-3 flex gap-2">
-                    <Button
-                      className="bg-ylika-teal hover:bg-ylika-teal/90"
-                      onClick={associate}
-                    >
-                      Asociar a expediente
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => handleClose(false)}
-                    >
-                      Descartar
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={onOpenKey}>
-                    Configurar Gemini
-                  </Button>
-                  <Button variant="outline" onClick={() => handleClose(false)}>
-                    Cerrar
+                  <Button
+                    variant="outline"
+                    className="mt-3 w-full gap-2"
+                    onClick={associate}
+                  >
+                    <Link2 className="size-4" />
+                    Asociar a este expediente
                   </Button>
                 </div>
               )}
+
+              <Button
+                variant="ghost"
+                className="w-full"
+                onClick={() => handleClose(false)}
+              >
+                Descartar
+              </Button>
+            </motion.div>
+          )}
+
+          {step === "create" && result && (
+            <motion.div
+              key="create"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="space-y-4"
+            >
+              <p className="text-sm text-muted-foreground">
+                Revisa los datos extraídos de{" "}
+                <span className="font-medium text-foreground">
+                  {result.archivo}
+                </span>{" "}
+                y confirma. Se creará el cliente (si no existe), el expediente y
+                se asociará el documento.
+              </p>
+
+              <div className="space-y-2">
+                <Label htmlFor="doc-cli">Cliente</Label>
+                <Input
+                  id="doc-cli"
+                  value={clienteNombre}
+                  onChange={(e) => setClienteNombre(e.target.value)}
+                  placeholder="Nombre del cliente"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="doc-rfc">RFC (opcional)</Label>
+                <Input
+                  id="doc-rfc"
+                  value={rfc}
+                  onChange={(e) => setRfc(e.target.value)}
+                  placeholder="XAXX010101000"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="doc-exp">Expediente / proyecto</Label>
+                <Input
+                  id="doc-exp"
+                  value={expedienteNombre}
+                  onChange={(e) => setExpedienteNombre(e.target.value)}
+                  placeholder="Nombre del expediente"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Tipo</Label>
+                  <Select
+                    value={sector}
+                    onValueChange={(v) => setSector(v as SectorTipo)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gobierno">Gobierno</SelectItem>
+                      <SelectItem value="privado">Privado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Modalidad</Label>
+                  <Select
+                    value={tipo}
+                    onValueChange={(v) => setTipo(v as ExpedienteTipo)}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="venta_directa">
+                        Venta Directa
+                      </SelectItem>
+                      <SelectItem value="proyecto">Proyecto</SelectItem>
+                      <SelectItem value="servicio">Servicio</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="doc-valor">Valor (MXN)</Label>
+                <Input
+                  id="doc-valor"
+                  inputMode="numeric"
+                  value={valor}
+                  onChange={(e) => setValor(e.target.value)}
+                  placeholder="150000"
+                />
+              </div>
+
+              <div className="flex flex-wrap justify-end gap-2 pt-2">
+                <Button variant="outline" onClick={() => setStep("result")}>
+                  Volver
+                </Button>
+                <Button
+                  className="gap-2 bg-ylika-teal hover:bg-ylika-teal/90"
+                  onClick={create}
+                  disabled={creating}
+                >
+                  {creating ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <FolderPlus className="size-4" />
+                  )}
+                  Crear y abrir
+                </Button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

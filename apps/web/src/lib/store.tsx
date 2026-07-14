@@ -51,6 +51,16 @@ type YlikaStore = StoreState & {
     sector: SectorTipo;
     valor: number;
   }) => ExpedienteNegocio;
+  /** Crea (o reutiliza) cliente + expediente desde un documento analizado y lo asocia. */
+  createFromDocumento: (input: {
+    documento: DocumentoAiResultado;
+    clienteNombre: string;
+    expedienteNombre: string;
+    valor: number;
+    sector: SectorTipo;
+    tipo: ExpedienteTipo;
+    rfc?: string;
+  }) => { cliente: Cliente; expediente: ExpedienteNegocio };
   getExpedienteByCodigo: (codigo: string) => ExpedienteNegocio | undefined;
   runAction: (
     codigo: string,
@@ -307,6 +317,192 @@ export function YlikaStoreProvider({ children }: { children: React.ReactNode }) 
     [state.clientes, state.expedientes],
   );
 
+  const createFromDocumento = useCallback(
+    (input: {
+      documento: DocumentoAiResultado;
+      clienteNombre: string;
+      expedienteNombre: string;
+      valor: number;
+      sector: SectorTipo;
+      tipo: ExpedienteTipo;
+      rfc?: string;
+    }) => {
+      const nombreCli = input.clienteNombre.trim() || "Cliente desde documento";
+      const rfc =
+        input.rfc?.trim() ||
+        input.documento.rfcReceptor ||
+        input.documento.rfcEmisor ||
+        "XAXX010101000";
+      const valor = input.valor > 0 ? input.valor : input.documento.monto || 0;
+      const expNombre =
+        input.expedienteNombre.trim() ||
+        input.documento.proyecto ||
+        input.documento.concepto ||
+        input.documento.clasificacion ||
+        "Expediente desde documento";
+
+      let outCliente: Cliente | null = null;
+      let outExp: ExpedienteNegocio | null = null;
+
+      setState((s) => {
+        const existing = s.clientes.find(
+          (c) =>
+            c.nombre.toLowerCase() === nombreCli.toLowerCase() ||
+            (rfc !== "XAXX010101000" && c.rfc.toUpperCase() === rfc.toUpperCase()),
+        );
+
+        const cliente: Cliente = existing
+          ? existing
+          : {
+              id: `cli-${crypto.randomUUID().slice(0, 8)}`,
+              codigo: nextCodigo(
+                "CLI",
+                s.clientes.map((c) => c.codigo),
+              ),
+              nombre: nombreCli,
+              rfc,
+              industria: "Desde documento IA",
+              sector: input.sector,
+              ejecutivo: "Ana Ruiz",
+              expedientesActivos: 0,
+              valorCartera: 0,
+              creditoDisponible: 500000,
+              estado: "activo",
+            };
+
+        const codigo = nextCodigo(
+          "EXP",
+          s.expedientes.map((e) => e.codigo),
+        );
+        const modalidadLabel =
+          input.tipo === "venta_directa"
+            ? "Venta Directa"
+            : input.tipo === "proyecto"
+              ? "Proyecto"
+              : "Servicio";
+
+        let expediente: ExpedienteNegocio = {
+          id: `exp-${crypto.randomUUID().slice(0, 8)}`,
+          codigo,
+          nombre: expNombre,
+          clienteId: cliente.id,
+          clienteNombre: cliente.nombre,
+          tipo: input.tipo,
+          sector: input.sector,
+          valor,
+          estado: "cotizacion",
+          avance: 8,
+          rentabilidad: 0,
+          ejecutivo: "Ana Ruiz",
+          empresa: "YLIKA Operaciones",
+          actualizadoEn: new Date().toISOString(),
+          resumen: emptyResumen(valor),
+          timeline: [
+            {
+              id: "t1",
+              label: "Cotización",
+              sublabel: input.documento.archivo,
+              estado: "activo",
+              fecha:
+                input.documento.fecha || new Date().toISOString().slice(0, 10),
+              monto: valor || undefined,
+            },
+            { id: "t2", label: "Pedido", estado: "pendiente" },
+            { id: "t3", label: "Factura", estado: "pendiente" },
+            { id: "t4", label: "Cobro", estado: "pendiente" },
+          ],
+          graph: {
+            nodes: [
+              {
+                id: "n-exp",
+                tipo: "expediente",
+                titulo: codigo,
+                subtitulo: `${modalidadLabel} · ${input.sector === "gobierno" ? "Gobierno" : "Privado"}`,
+                estado: "activo",
+                x: 380,
+                y: 40,
+              },
+              {
+                id: "n-cli",
+                tipo: "cliente",
+                titulo: cliente.nombre,
+                subtitulo: "Cliente",
+                estado: "completado",
+                x: 140,
+                y: 40,
+              },
+              {
+                id: "n-cot",
+                tipo: "cotizacion",
+                titulo: "Cotización",
+                subtitulo: input.documento.archivo,
+                monto: valor || undefined,
+                estado: "activo",
+                x: 280,
+                y: 180,
+              },
+            ],
+            edges: [
+              { id: "e1", from: "n-cli", to: "n-exp" },
+              { id: "e2", from: "n-exp", to: "n-cot" },
+            ],
+          },
+          insights: [
+            {
+              id: "i1",
+              severidad: "info",
+              titulo: "Creado desde documento IA",
+              descripcion: `${input.documento.clasificacion}: ${input.documento.archivo}`,
+              impacto: "Expediente listo para operar.",
+              recomendacion: "Revisa la cotización y crea el pedido.",
+              accionId: "crear_pedido",
+            },
+          ],
+        };
+
+        const associated = applyExpedienteAction(
+          expediente,
+          "asociar_documento",
+          { documento: input.documento },
+        );
+        expediente = associated.expediente;
+
+        outCliente = cliente;
+        outExp = expediente;
+
+        return {
+          ...s,
+          clientes: existing
+            ? s.clientes.map((c) =>
+                c.id === cliente.id
+                  ? {
+                      ...c,
+                      expedientesActivos: c.expedientesActivos + 1,
+                      valorCartera: c.valorCartera + valor,
+                      sector: c.sector || input.sector,
+                    }
+                  : c,
+              )
+            : [
+                {
+                  ...cliente,
+                  expedientesActivos: 1,
+                  valorCartera: valor,
+                },
+                ...s.clientes,
+              ],
+          expedientes: [expediente, ...s.expedientes],
+        };
+      });
+
+      if (!outCliente || !outExp) {
+        throw new Error("No se pudo crear desde el documento");
+      }
+      return { cliente: outCliente, expediente: outExp };
+    },
+    [],
+  );
+
   const getExpedienteByCodigo = useCallback(
     (codigo: string) =>
       state.expedientes.find(
@@ -478,6 +674,7 @@ export function YlikaStoreProvider({ children }: { children: React.ReactNode }) 
       ready,
       addCliente,
       addExpediente,
+      createFromDocumento,
       getExpedienteByCodigo,
       runAction,
       convertProspecto,
@@ -487,6 +684,7 @@ export function YlikaStoreProvider({ children }: { children: React.ReactNode }) 
       ready,
       addCliente,
       addExpediente,
+      createFromDocumento,
       getExpedienteByCodigo,
       runAction,
       convertProspecto,
