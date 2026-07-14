@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   Sparkles,
   Users,
+  Landmark,
 } from "lucide-react";
 import {
   CommandDialog,
@@ -65,6 +66,9 @@ export function CommandPalette({
           </CommandItem>
           <CommandItem onSelect={() => go("/operaciones")}>
             <BriefcaseBusiness /> Operaciones
+          </CommandItem>
+          <CommandItem onSelect={() => go("/licitaciones")}>
+            <Landmark /> Licitaciones
           </CommandItem>
           <CommandItem onSelect={() => go("/insights")}>
             <Sparkles /> Insights

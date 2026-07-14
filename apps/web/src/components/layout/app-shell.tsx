@@ -11,6 +11,7 @@ import {
   Search,
   Sparkles,
   Users,
+  Landmark,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ const nav = [
   { href: "/prospectos", label: "Prospectos", icon: Users },
   { href: "/clientes", label: "Clientes", icon: Building2 },
   { href: "/operaciones", label: "Operaciones", icon: BriefcaseBusiness },
+  { href: "/licitaciones", label: "Licitaciones", icon: Landmark },
   { href: "/insights", label: "Insights", icon: Sparkles },
 ];
 
