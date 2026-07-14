@@ -99,7 +99,12 @@ export function ExpedienteTimeline({
         </ol>
       </div>
 
-      <EntityDetailSheet open={open} onOpenChange={setOpen} detail={detail} />
+      <EntityDetailSheet
+        open={open}
+        onOpenChange={setOpen}
+        detail={detail}
+        expedienteCodigo={expedienteCodigo}
+      />
     </>
   );
 }

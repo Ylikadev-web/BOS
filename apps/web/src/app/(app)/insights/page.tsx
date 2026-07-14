@@ -1,19 +1,42 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
 import { AlertTriangle, Info, ShieldAlert } from "lucide-react";
+import { toast } from "sonner";
 import { useYlikaStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { expedienteHref } from "@/lib/routes";
+import { triggerBrowserDownload } from "@/lib/expediente-actions";
 
 export default function InsightsPage() {
-  const { expedientes } = useYlikaStore();
-  const insights = expedientes.flatMap((e) =>
-    e.insights.map((insight) => ({
-      ...insight,
-      expedienteCodigo: e.codigo,
-      expedienteNombre: e.nombre,
-    })),
+  const { expedientes, runAction } = useYlikaStore();
+  const insights = useMemo(
+    () =>
+      expedientes.flatMap((e) =>
+        e.insights
+          .filter((i) => !i.resuelto)
+          .map((insight) => ({
+            ...insight,
+            expedienteCodigo: e.codigo,
+            expedienteNombre: e.nombre,
+          })),
+      ),
+    [expedientes],
   );
+
+  const apply = (codigo: string, insightId: string) => {
+    const result = runAction(codigo, "aplicar_recomendacion", {
+      insightId,
+    });
+    if (!result) {
+      toast.error("No se pudo aplicar");
+      return;
+    }
+    if (result.download) triggerBrowserDownload(result.download);
+    toast.success(result.message);
+  };
 
   return (
     <div className="space-y-6">
@@ -25,18 +48,21 @@ export default function InsightsPage() {
           Inteligencia operativa
         </h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">
-          Riesgos, recomendaciones y señales detectadas por IA a través del
-          portafolio.
+          Cada recomendación se puede aplicar y modifica el expediente.
         </p>
       </div>
 
       <div className="grid gap-4">
+        {insights.length === 0 && (
+          <p className="rounded-2xl border border-border/80 bg-card p-6 text-sm text-muted-foreground">
+            No hay insights abiertos en el portafolio.
+          </p>
+        )}
         {insights.map((insight) => (
-          <Link
+          <div
             key={`${insight.expedienteCodigo}-${insight.id}`}
-            href={`/operaciones/ver/?codigo=${encodeURIComponent(insight.expedienteCodigo)}`}
             className={cn(
-              "block rounded-2xl border p-5 transition hover:-translate-y-0.5 hover:shadow-md",
+              "rounded-2xl border p-5",
               insight.severidad === "critical" &&
                 "border-ylika-orange/40 bg-ylika-orange-soft",
               insight.severidad === "warning" &&
@@ -66,9 +92,37 @@ export default function InsightsPage() {
                 <p className="mt-2 text-xs text-muted-foreground">
                   Recomendación: {insight.recomendacion}
                 </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    className="bg-ylika-teal hover:bg-ylika-teal/90"
+                    onClick={() =>
+                      apply(insight.expedienteCodigo, insight.id)
+                    }
+                  >
+                    Aplicar
+                  </Button>
+                  <Button size="sm" variant="outline" asChild>
+                    <Link href={expedienteHref(insight.expedienteCodigo)}>
+                      Abrir expediente
+                    </Link>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      runAction(insight.expedienteCodigo, "descartar_insight", {
+                        insightId: insight.id,
+                      });
+                      toast.success("Insight descartado");
+                    }}
+                  >
+                    Descartar
+                  </Button>
+                </div>
               </div>
             </div>
-          </Link>
+          </div>
         ))}
       </div>
     </div>

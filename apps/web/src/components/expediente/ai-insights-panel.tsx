@@ -5,14 +5,47 @@ import { AlertTriangle, Info, ShieldAlert, Sparkles } from "lucide-react";
 import type { AiInsight, ResumenFinanciero } from "@ylika/shared";
 import { formatCurrency, formatPercent } from "@ylika/shared";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { useYlikaStore } from "@/lib/store";
+import { triggerBrowserDownload } from "@/lib/expediente-actions";
+import { toast } from "sonner";
 
 export function AiInsightsPanel({
   insights,
   resumen,
+  expedienteCodigo,
 }: {
   insights: AiInsight[];
   resumen: ResumenFinanciero;
+  expedienteCodigo: string;
 }) {
+  const { runAction } = useYlikaStore();
+  const active = insights.filter((i) => !i.resuelto);
+
+  const apply = (insight: AiInsight) => {
+    const result = runAction(expedienteCodigo, "aplicar_recomendacion", {
+      insightId: insight.id,
+    });
+    if (!result) {
+      toast.error("No se pudo aplicar");
+      return;
+    }
+    if (result.download) triggerBrowserDownload(result.download);
+    if (result.focusFinanzas) {
+      document
+        .getElementById("finanzas-panel")
+        ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+    toast.success(result.message);
+  };
+
+  const dismiss = (insightId: string) => {
+    const result = runAction(expedienteCodigo, "descartar_insight", {
+      insightId,
+    });
+    if (result) toast.success(result.message);
+  };
+
   return (
     <div className="flex h-full flex-col gap-4">
       <div>
@@ -28,7 +61,12 @@ export function AiInsightsPanel({
       </div>
 
       <div className="space-y-3">
-        {insights.map((insight, index) => (
+        {active.length === 0 && (
+          <p className="rounded-xl border border-border/80 bg-secondary/40 p-4 text-sm text-muted-foreground">
+            Sin señales abiertas. El expediente está limpio.
+          </p>
+        )}
+        {active.map((insight, index) => (
           <motion.article
             key={insight.id}
             initial={{ opacity: 0, y: 10 }}
@@ -39,13 +77,13 @@ export function AiInsightsPanel({
               insight.severidad === "critical" &&
                 "border-ylika-orange/40 bg-ylika-orange-soft",
               insight.severidad === "warning" &&
-                "border-amber-200 bg-amber-50/80",
-              insight.severidad === "info" && "border-border bg-white",
+                "border-amber-200 bg-amber-50/80 dark:border-amber-900 dark:bg-amber-950/30",
+              insight.severidad === "info" && "border-border bg-card",
             )}
           >
             <div className="flex items-start gap-2">
               <SeverityIcon severidad={insight.severidad} />
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="font-semibold tracking-tight">{insight.titulo}</p>
                 {insight.entidadRelacionada && (
                   <p className="mt-0.5 font-mono text-xs text-muted-foreground">
@@ -69,13 +107,32 @@ export function AiInsightsPanel({
                     {insight.recomendacion}
                   </p>
                 </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    className="bg-ylika-teal hover:bg-ylika-teal/90"
+                    onClick={() => apply(insight)}
+                  >
+                    Aplicar
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => dismiss(insight.id)}
+                  >
+                    Descartar
+                  </Button>
+                </div>
               </div>
             </div>
           </motion.article>
         ))}
       </div>
 
-      <div className="mt-auto rounded-xl border border-border/80 bg-white p-4">
+      <div
+        id="finanzas-panel"
+        className="mt-auto rounded-xl border border-border/80 bg-card p-4"
+      >
         <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Finanzas actuales
         </h3>
@@ -118,7 +175,12 @@ function FinRow({
   return (
     <div className="flex items-center justify-between gap-3">
       <dt className="text-muted-foreground">{label}</dt>
-      <dd className={cn("font-medium tabular-nums", emphasize && "text-ylika-teal")}>
+      <dd
+        className={cn(
+          "font-medium tabular-nums",
+          emphasize && "text-ylika-teal",
+        )}
+      >
         {value}
       </dd>
     </div>

@@ -90,6 +90,7 @@ export function ExpedienteWorkspace({
           <AiInsightsPanel
             insights={expediente.insights}
             resumen={expediente.resumen}
+            expedienteCodigo={expediente.codigo}
           />
         </aside>
       </div>

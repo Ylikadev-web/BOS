@@ -77,6 +77,9 @@ export interface AiInsight {
   impacto: string;
   recomendacion: string;
   entidadRelacionada?: string;
+  /** Acción ejecutable desde el insight */
+  accionId?: string;
+  resuelto?: boolean;
 }
 
 export interface ExpedienteNegocio {

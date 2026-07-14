@@ -164,6 +164,7 @@ export function BusinessGraph({
         open={open}
         onOpenChange={setOpen}
         detail={detail}
+        expedienteCodigo={expedienteCodigo}
       />
     </>
   );

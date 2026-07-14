@@ -1,5 +1,8 @@
 import type { GraphNodeTipo } from "@ylika/shared";
 import { formatCurrency } from "@ylika/shared";
+import type { ActionId } from "@/lib/expediente-actions";
+
+export type EntityAction = { id: ActionId; label: string };
 
 export type EntityDetail = {
   tipo: GraphNodeTipo | string;
@@ -11,8 +14,8 @@ export type EntityDetail = {
   resumen: string;
   campos: { label: string; value: string }[];
   lineas?: { concepto: string; cantidad: number; precio: number; total: number }[];
-  relaciones?: { label: string; value: string }[];
-  acciones?: string[];
+  relaciones?: { label: string; value: string; actionId?: ActionId }[];
+  acciones?: EntityAction[];
 };
 
 export function resolveEntityDetail(input: {
@@ -25,30 +28,9 @@ export function resolveEntityDetail(input: {
 }): EntityDetail {
   const { tipo, titulo, subtitulo, monto, expedienteCodigo, clienteNombre } =
     input;
-
   const baseMonto = monto ?? 0;
 
   if (tipo === "cotizacion" || /cotizaci/i.test(titulo)) {
-    const lineas = [
-      {
-        concepto: "Suministro e instalación — alcance principal",
-        cantidad: 1,
-        precio: Math.round(baseMonto * 0.72),
-        total: Math.round(baseMonto * 0.72),
-      },
-      {
-        concepto: "Supervisión y puesta en marcha",
-        cantidad: 1,
-        precio: Math.round(baseMonto * 0.18),
-        total: Math.round(baseMonto * 0.18),
-      },
-      {
-        concepto: "Flete y logística",
-        cantidad: 1,
-        precio: Math.round(baseMonto * 0.1),
-        total: Math.round(baseMonto * 0.1),
-      },
-    ];
     return {
       tipo: "cotizacion",
       titulo: "Previsualización de Cotización",
@@ -63,24 +45,47 @@ export function resolveEntityDetail(input: {
         { label: "Vigencia", value: "30 días" },
         { label: "Condiciones", value: "50% anticipo · 50% contra entrega" },
       ],
-      lineas,
-      relaciones: [
-        { label: "Siguiente", value: "Pedido de venta" },
-        { label: "Origen", value: "Prospecto / negociación" },
+      lineas: [
+        {
+          concepto: "Suministro e instalación — alcance principal",
+          cantidad: 1,
+          precio: Math.round(baseMonto * 0.72),
+          total: Math.round(baseMonto * 0.72),
+        },
+        {
+          concepto: "Supervisión y puesta en marcha",
+          cantidad: 1,
+          precio: Math.round(baseMonto * 0.18),
+          total: Math.round(baseMonto * 0.18),
+        },
+        {
+          concepto: "Flete y logística",
+          cantidad: 1,
+          precio: Math.round(baseMonto * 0.1),
+          total: Math.round(baseMonto * 0.1),
+        },
       ],
-      acciones: ["Descargar PDF", "Crear pedido", "Enviar al cliente"],
+      relaciones: [
+        { label: "Siguiente", value: "Pedido de venta", actionId: "crear_pedido" },
+        { label: "Cliente", value: clienteNombre, actionId: "ir_cliente" },
+      ],
+      acciones: [
+        { id: "download_pdf", label: "Descargar PDF" },
+        { id: "crear_pedido", label: "Crear pedido" },
+        { id: "enviar_cliente", label: "Enviar al cliente" },
+      ],
     };
   }
 
-  if (tipo === "pedido" || /pedido/i.test(titulo)) {
+  if (tipo === "pedido" || /pedido|remisi/i.test(titulo)) {
     return {
       tipo: "pedido",
-      titulo: "Pedido de Venta",
+      titulo: /remisi/i.test(titulo) ? "Remisión" : "Pedido de Venta",
       codigo: `PV-${expedienteCodigo.replace("EXP-", "")}`,
       estado: "Creado",
       monto: baseMonto,
       fecha: "2026-01-18",
-      resumen: "Pedido generado a partir de la cotización aprobada.",
+      resumen: "Pedido / remisión del flujo de venta del expediente.",
       campos: [
         { label: "Cliente", value: clienteNombre },
         { label: "Expediente", value: expedienteCodigo },
@@ -91,15 +96,17 @@ export function resolveEntityDetail(input: {
         {
           concepto: "Partida principal del pedido",
           cantidad: 1,
-          precio: baseMonto,
-          total: baseMonto,
+          precio: baseMonto || 1,
+          total: baseMonto || 1,
         },
       ],
       relaciones: [
-        { label: "Origen", value: "Cotización aprobada" },
-        { label: "Siguiente", value: "Remisión / Factura" },
+        { label: "Siguiente", value: "Remisión / Factura", actionId: "generar_remision" },
       ],
-      acciones: ["Ver surtido", "Generar remisión"],
+      acciones: [
+        { id: "ver_surtido", label: "Ver surtido" },
+        { id: "generar_remision", label: "Generar remisión" },
+      ],
     };
   }
 
@@ -114,15 +121,18 @@ export function resolveEntityDetail(input: {
       resumen: "Comprobante fiscal asociado al expediente.",
       campos: [
         { label: "UUID", value: "A1B2C3D4-E5F6-7890-ABCD-EF1234567890" },
-        { label: "Cliente / Proveedor", value: clienteNombre },
-        { label: "Método de pago", value: "PPD — Pago en parcialidades" },
-        { label: "Uso CFDI", value: "G03 — Gastos en general" },
+        { label: "Receptor", value: clienteNombre },
+        { label: "Método de pago", value: "PPD" },
+        { label: "Uso CFDI", value: "G03" },
       ],
       relaciones: [
-        { label: "Expediente", value: expedienteCodigo },
-        { label: "Cobro / Pago", value: "Parcial o pendiente" },
+        { label: "Cobro", value: "Registrar cobro", actionId: "registrar_cobro" },
       ],
-      acciones: ["Ver XML", "Ver PDF", "Registrar cobro"],
+      acciones: [
+        { id: "download_xml", label: "Ver XML" },
+        { id: "download_pdf", label: "Ver PDF" },
+        { id: "registrar_cobro", label: "Registrar cobro" },
+      ],
     };
   }
 
@@ -139,13 +149,15 @@ export function resolveEntityDetail(input: {
         { label: "Cuenta bancaria", value: "BBVA · ****4521" },
         { label: "Referencia", value: "SPEI-908812" },
         { label: "Expediente", value: expedienteCodigo },
-        { label: "Saldo pendiente", value: formatCurrency(Math.max(0, 60000)) },
       ],
       relaciones: [
-        { label: "Factura", value: `FAC-${expedienteCodigo.replace("EXP-", "")}` },
-        { label: "Cliente", value: clienteNombre },
+        { label: "Saldo", value: "Programar seguimiento", actionId: "programar_saldo" },
       ],
-      acciones: ["Conciliar", "Programar saldo"],
+      acciones: [
+        { id: "conciliar", label: "Conciliar" },
+        { id: "programar_saldo", label: "Programar saldo" },
+        { id: "registrar_cobro", label: "Registrar otro cobro" },
+      ],
     };
   }
 
@@ -159,23 +171,27 @@ export function resolveEntityDetail(input: {
       fecha: "2026-02-14",
       resumen: "Compra ligada al expediente para cubrir el alcance vendido.",
       campos: [
-        { label: "Proveedor", value: subtitulo?.includes("Electra") ? "Electra S.A." : "Proveedor" },
+        {
+          label: "Proveedor",
+          value: subtitulo?.includes("Electra") ? "Electra S.A." : "Proveedor",
+        },
         { label: "Expediente", value: expedienteCodigo },
-        { label: "Entrega", value: "Pendiente / Parcial" },
       ],
       lineas: [
         {
           concepto: "Materiales / servicios del proveedor",
           cantidad: 1,
-          precio: baseMonto,
-          total: baseMonto,
+          precio: baseMonto || 1,
+          total: baseMonto || 1,
         },
       ],
       relaciones: [
-        { label: "Siguiente", value: "Factura proveedor → Pago" },
-        { label: "Impacto", value: "Rentabilidad del expediente" },
+        { label: "CFDI", value: "Solicitar al proveedor", actionId: "solicitar_cfdi" },
       ],
-      acciones: ["Solicitar CFDI", "Registrar recepción"],
+      acciones: [
+        { id: "solicitar_cfdi", label: "Solicitar CFDI" },
+        { id: "registrar_recepcion", label: "Registrar recepción" },
+      ],
     };
   }
 
@@ -191,13 +207,12 @@ export function resolveEntityDetail(input: {
       campos: [
         { label: "Cliente", value: clienteNombre },
         { label: "Expediente", value: expedienteCodigo },
-        { label: "Firma", value: "Digital · completa" },
       ],
-      relaciones: [
-        { label: "Proyecto", value: titulo },
-        { label: "Siguiente", value: "Ingeniería de costos / compras" },
+      acciones: [
+        { id: "download_pdf", label: "Ver PDF" },
+        { id: "abrir_clausulado", label: "Abrir clausulado" },
+        { id: "enviar_cliente", label: "Recordar firma" },
       ],
-      acciones: ["Ver PDF", "Abrir clausulado"],
     };
   }
 
@@ -210,13 +225,11 @@ export function resolveEntityDetail(input: {
       campos: [
         { label: "Nombre", value: clienteNombre },
         { label: "Expediente actual", value: expedienteCodigo },
-        { label: "Relación", value: "Cliente del expediente" },
       ],
-      relaciones: [
-        { label: "Expedientes", value: expedienteCodigo },
-        { label: "Contactos", value: "Ver en módulo Clientes" },
+      acciones: [
+        { id: "ir_cliente", label: "Ir a cliente" },
+        { id: "ver_credito", label: "Ver crédito" },
       ],
-      acciones: ["Ir a cliente", "Ver crédito"],
     };
   }
 
@@ -228,14 +241,13 @@ export function resolveEntityDetail(input: {
       resumen: subtitulo ?? "Señal detectada por IA en el expediente.",
       campos: [
         { label: "Expediente", value: expedienteCodigo },
-        { label: "Severidad", value: "Alta" },
         { label: "Detalle", value: subtitulo ?? titulo },
       ],
-      relaciones: [
-        { label: "Objeto", value: "OC / Factura / Entrega" },
-        { label: "Impacto", value: "Retraso / margen" },
+      acciones: [
+        { id: "crear_tarea", label: "Crear tarea" },
+        { id: "notificar_comprador", label: "Notificar comprador" },
+        { id: "solicitar_cfdi", label: "Solicitar CFDI" },
       ],
-      acciones: ["Crear tarea", "Notificar comprador"],
     };
   }
 
@@ -249,10 +261,7 @@ export function resolveEntityDetail(input: {
         { label: "Expediente", value: expedienteCodigo },
         { label: "Indicador", value: subtitulo ?? "Margen" },
       ],
-      relaciones: [
-        { label: "Origen", value: "Vendido − Comprado − Costos" },
-      ],
-      acciones: ["Ver resumen financiero"],
+      acciones: [{ id: "ver_finanzas", label: "Ver resumen financiero" }],
     };
   }
 
@@ -265,12 +274,13 @@ export function resolveEntityDetail(input: {
     campos: [
       { label: "Expediente", value: expedienteCodigo },
       { label: "Cliente", value: clienteNombre },
-      ...(subtitulo ? [{ label: "Detalle", value: subtitulo }] : []),
       ...(baseMonto
         ? [{ label: "Monto", value: formatCurrency(baseMonto) }]
         : []),
     ],
-    relaciones: [{ label: "Contexto", value: "Business Graph / Timeline" }],
-    acciones: ["Cerrar"],
+    acciones: [
+      { id: "crear_tarea", label: "Crear tarea" },
+      { id: "ver_finanzas", label: "Ver finanzas" },
+    ],
   };
 }

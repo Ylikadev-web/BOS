@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { analyzeDocument, isAllowedDocument } from "@/lib/ai-ingest";
 import { expedienteHref } from "@/lib/routes";
+import { useYlikaStore } from "@/lib/store";
 
 type Step = "drop" | "analyzing" | "result";
 
@@ -37,6 +38,7 @@ export function DocumentIngestDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const router = useRouter();
+  const { runAction } = useYlikaStore();
   const inputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<Step>("drop");
   const [result, setResult] = useState<DocumentoAiResultado | null>(null);
@@ -92,7 +94,18 @@ export function DocumentIngestDialog({
       toast.error("No hay expediente sugerido");
       return;
     }
-    toast.success(`Documento asociado a ${result.expedienteSugerido.codigo}`);
+    const applied = runAction(
+      result.expedienteSugerido.codigo,
+      "asociar_documento",
+      { documento: result },
+    );
+    if (!applied) {
+      toast.error(
+        `No se encontró ${result.expedienteSugerido.codigo} en este navegador`,
+      );
+      return;
+    }
+    toast.success(applied.message);
     handleClose(false);
     router.push(expedienteHref(result.expedienteSugerido.codigo));
   };

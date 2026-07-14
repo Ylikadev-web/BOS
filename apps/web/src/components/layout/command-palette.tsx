@@ -18,8 +18,9 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { expedientes, clientes, prospectos } from "@/data/seed";
+import { useYlikaStore } from "@/lib/store";
 import { formatCurrency } from "@ylika/shared";
+import { expedienteHref } from "@/lib/routes";
 
 export function CommandPalette({
   open,
@@ -29,6 +30,7 @@ export function CommandPalette({
   onOpenChange: (open: boolean) => void;
 }) {
   const router = useRouter();
+  const { expedientes, clientes, prospectos } = useYlikaStore();
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -73,7 +75,7 @@ export function CommandPalette({
           {expedientes.map((exp) => (
             <CommandItem
               key={exp.id}
-              onSelect={() => go(`/operaciones/ver/?codigo=${encodeURIComponent(exp.codigo)}`)}
+              onSelect={() => go(expedienteHref(exp.codigo))}
             >
               <BriefcaseBusiness />
               <div className="flex flex-col">
@@ -90,9 +92,17 @@ export function CommandPalette({
         <CommandSeparator />
         <CommandGroup heading="Clientes">
           {clientes.map((c) => (
-            <CommandItem key={c.id} onSelect={() => go("/clientes")}>
+            <CommandItem
+              key={c.id}
+              onSelect={() => go(`/clientes?focus=${encodeURIComponent(c.id)}`)}
+            >
               <Building2 />
-              {c.nombre}
+              <div className="flex flex-col">
+                <span>{c.nombre}</span>
+                <span className="text-xs text-muted-foreground">
+                  {c.codigo} · {c.sector}
+                </span>
+              </div>
             </CommandItem>
           ))}
         </CommandGroup>
@@ -100,7 +110,12 @@ export function CommandPalette({
           {prospectos.map((p) => (
             <CommandItem key={p.id} onSelect={() => go("/prospectos")}>
               <Users />
-              {p.nombre}
+              <div className="flex flex-col">
+                <span>{p.nombre}</span>
+                <span className="text-xs text-muted-foreground">
+                  {p.empresa} · {p.etapa}
+                </span>
+              </div>
             </CommandItem>
           ))}
         </CommandGroup>

@@ -18,6 +18,7 @@ import { CommandPalette } from "@/components/layout/command-palette";
 import { DocumentIngestDialog } from "@/components/ai/document-ingest-dialog";
 import { YlikaMark } from "@/components/layout/ylika-mark";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { UserMenu } from "@/components/layout/user-menu";
 import { CreateExpedienteDialog } from "@/components/operaciones/create-expediente-dialog";
 import { useState } from "react";
 
@@ -108,9 +109,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               <Command className="size-4" />
             </Button>
-            <div className="ml-1 flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-ylika-teal to-teal-700 text-xs font-semibold text-white">
-              AR
-            </div>
+            <UserMenu />
           </div>
         </div>
       </header>
