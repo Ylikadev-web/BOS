@@ -1,0 +1,138 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-display);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-ylika-teal: var(--ylika-teal);
+  --color-ylika-teal-soft: var(--ylika-teal-soft);
+  --color-ylika-orange: var(--ylika-orange);
+  --color-ylika-orange-soft: var(--ylika-orange-soft);
+  --color-ylika-success: var(--ylika-success);
+  --color-ylika-success-soft: var(--ylika-success-soft);
+  --color-ylika-grid: var(--ylika-grid);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+:root {
+  /* Light workspace inspired by Linear/Notion — YLIKA accents */
+  --background: #f4f6f8;
+  --foreground: #0f1720;
+  --card: #ffffff;
+  --card-foreground: #0f1720;
+  --popover: #ffffff;
+  --popover-foreground: #0f1720;
+  --primary: #0f766e;
+  --primary-foreground: #f7fffe;
+  --secondary: #eef2f5;
+  --secondary-foreground: #1c2733;
+  --muted: #eef2f5;
+  --muted-foreground: #64748b;
+  --accent: #fff4e8;
+  --accent-foreground: #9a3412;
+  --destructive: #dc2626;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #14b8a6;
+  --chart-1: #14b8a6;
+  --chart-2: #f59e0b;
+  --chart-3: #22c55e;
+  --chart-4: #64748b;
+  --chart-5: #0f172a;
+  --radius: 0.75rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f1720;
+  --sidebar-primary: #0f766e;
+  --sidebar-primary-foreground: #f7fffe;
+  --sidebar-accent: #f0fdfa;
+  --sidebar-accent-foreground: #115e59;
+  --sidebar-border: #e8eef3;
+  --sidebar-ring: #14b8a6;
+  --ylika-teal: #0d9488;
+  --ylika-teal-soft: #ccfbf1;
+  --ylika-orange: #f59e0b;
+  --ylika-orange-soft: #fff7ed;
+  --ylika-success: #16a34a;
+  --ylika-success-soft: #dcfce7;
+  --ylika-grid: #dbe3ea;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 0% -20%, rgba(13, 148, 136, 0.08), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 0%, rgba(245, 158, 11, 0.06), transparent);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  html {
+    @apply font-sans;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display), var(--font-body), sans-serif;
+    letter-spacing: -0.03em;
+  }
+}
+
+@layer utilities {
+  .graph-canvas {
+    background-color: #f8fafc;
+    background-image:
+      linear-gradient(to right, transparent 0, transparent calc(100% - 1px), var(--ylika-grid) calc(100% - 1px)),
+      repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent 23px,
+        var(--ylika-grid) 23px,
+        var(--ylika-grid) 24px
+      );
+    background-size: 48px 100%, 100% 24px;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+}
