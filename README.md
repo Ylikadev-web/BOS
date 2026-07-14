@@ -34,18 +34,37 @@ packages/shared   → Tipos de dominio compartidos
 supabase/migrations → Schema PostgreSQL completo
 ```
 
-## Arranque rápido
+## Arranque rápido (local)
 
 ```bash
 pnpm install
 pnpm dev:web    # http://localhost:3000
-pnpm dev:api    # http://localhost:3001/api
+pnpm dev:api    # http://localhost:3001/api  (opcional)
 ```
 
-O en paralelo:
+## Publicar en GitHub Pages (sin Vercel)
+
+El frontend es **estático** (datos demo incluidos). No necesitas Vercel.
+
+### 1. Mergea este branch a `main`
+
+### 2. Activa Pages en el repo
+1. GitHub → **Settings** → **Pages**
+2. **Source:** GitHub Actions
+
+### 3. El workflow despliega solo
+Archivo: `.github/workflows/deploy-pages.yml`
+
+URL típica:
+
+`https://ylikadev-web.github.io/BOS/workspace/`
+
+### Build local del sitio estático
 
 ```bash
-pnpm dev
+cd apps/web
+pnpm build:pages
+# sale en apps/web/out
 ```
 
 ## Navegación

@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation";
-import { getExpedienteByCodigo } from "@/data/seed";
+import { expedientes, getExpedienteByCodigo } from "@/data/seed";
 import { ExpedienteWorkspace } from "@/components/expediente/expediente-workspace";
+
+export function generateStaticParams() {
+  return expedientes.map((e) => ({ codigo: e.codigo }));
+}
 
 export default async function ExpedientePage({
   params,
