@@ -1,4 +1,16 @@
-import type { DocumentoAiResultado } from "@ylika/shared";
+import type {
+  DocumentoAiResultado,
+  ExpedienteMatchHint,
+} from "@ylika/shared";
+import {
+  DOCUMENT_ANALYSIS_JSON_SCHEMA,
+  DOCUMENT_ANALYSIS_MODEL,
+  buildDocumentAnalysisPrompt,
+  guessMimeType,
+  heuristicAnalyze,
+  isMultimodalDocument,
+  normalizeAiResult,
+} from "@ylika/shared";
 
 const ALLOWED_EXT = [
   ".pdf",
@@ -16,130 +28,216 @@ const ALLOWED_EXT = [
   ".txt",
 ];
 
+const GEMINI_KEY_STORAGE = "ylika-gemini-api-key";
+
 export function isAllowedDocument(file: File) {
   const name = file.name.toLowerCase();
   return ALLOWED_EXT.some((ext) => name.endsWith(ext)) || file.type.length > 0;
 }
 
-function classifyFromName(filename: string): Partial<DocumentoAiResultado> {
-  const lower = filename.toLowerCase();
-
-  if (lower.includes("cemex") || lower.includes("concreto")) {
-    return {
-      clasificacion: "Cotización de proveedor",
-      proveedor: "CEMEX",
-      monto: 450000,
-      concepto: "Concreto",
-      proyecto: "Planta Norte",
-      expedienteSugerido: {
-        codigo: "EXP-000875",
-        nombre: "Planta Norte",
-        confianza: 0.92,
-      },
-    };
+export function getGeminiApiKey(): string {
+  if (typeof window === "undefined") {
+    return process.env.NEXT_PUBLIC_GOOGLE_GENERATIVE_AI_API_KEY ?? "";
   }
-
-  if (lower.includes("factura") || lower.includes("cfdi") || lower.endsWith(".xml")) {
-    return {
-      clasificacion: "Factura / CFDI",
-      monto: 125000,
-      concepto: "Servicios facturados",
-      expedienteSugerido: {
-        codigo: "EXP-000452",
-        nombre: "Venta Directa SHAMOSH",
-        confianza: 0.78,
-      },
-    };
-  }
-
-  if (lower.includes("oc") || lower.includes("orden") || lower.includes("compra")) {
-    return {
-      clasificacion: "Orden de compra",
-      proveedor: "Proveedor detectado",
-      monto: 210000,
-      concepto: "Materiales",
-      expedienteSugerido: {
-        codigo: "EXP-000875",
-        nombre: "Planta Norte",
-        confianza: 0.81,
-      },
-    };
-  }
-
-  if (lower.includes("cotiz") || lower.includes("quote") || lower.includes("propuesta")) {
-    return {
-      clasificacion: "Cotización",
-      monto: 180000,
-      concepto: "Propuesta comercial",
-      expedienteSugerido: {
-        codigo: "EXP-000452",
-        nombre: "Venta Directa SHAMOSH",
-        confianza: 0.74,
-      },
-    };
-  }
-
-  return {
-    clasificacion: "Documento comercial",
-    monto: 50000,
-    concepto: "Pendiente de revisión",
-    expedienteSugerido: {
-      codigo: "EXP-000875",
-      nombre: "Planta Norte",
-      confianza: 0.55,
-    },
-  };
+  return (
+    localStorage.getItem(GEMINI_KEY_STORAGE) ||
+    process.env.NEXT_PUBLIC_GOOGLE_GENERATIVE_AI_API_KEY ||
+    ""
+  );
 }
 
-/** Client-side AI stub: classifies by filename + optional text peek */
-export async function analyzeDocument(file: File): Promise<DocumentoAiResultado> {
-  const fromName = classifyFromName(file.name);
-  let textHint = "";
+export function setGeminiApiKey(key: string) {
+  if (typeof window === "undefined") return;
+  const trimmed = key.trim();
+  if (trimmed) localStorage.setItem(GEMINI_KEY_STORAGE, trimmed);
+  else localStorage.removeItem(GEMINI_KEY_STORAGE);
+}
+
+async function readTextHint(file: File): Promise<string | undefined> {
+  const name = file.name.toLowerCase();
+  const textual =
+    file.type.startsWith("text/") ||
+    file.type.includes("xml") ||
+    name.endsWith(".xml") ||
+    name.endsWith(".csv") ||
+    name.endsWith(".txt") ||
+    name.endsWith(".eml");
+  if (!textual) return undefined;
+  try {
+    return (await file.text()).slice(0, 20000);
+  } catch {
+    return undefined;
+  }
+}
+
+async function fileToBase64(file: File): Promise<string> {
+  const buf = await file.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+async function analyzeViaApi(
+  file: File,
+  expedientes: ExpedienteMatchHint[],
+): Promise<DocumentoAiResultado | null> {
+  const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "");
+  if (!base) return null;
 
   try {
-    if (
-      file.type.startsWith("text/") ||
-      file.name.toLowerCase().endsWith(".xml") ||
-      file.name.toLowerCase().endsWith(".csv") ||
-      file.name.toLowerCase().endsWith(".txt")
-    ) {
-      textHint = (await file.text()).slice(0, 2000);
-    }
+    const form = new FormData();
+    form.append("file", file, file.name);
+    form.append("expedientes", JSON.stringify(expedientes));
+    const res = await fetch(`${base}/ai/ingest`, {
+      method: "POST",
+      body: form,
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as DocumentoAiResultado;
+    if (!data?.clasificacion) return null;
+    return { ...data, provider: data.provider ?? "api" };
   } catch {
-    // binary files — ignore
+    return null;
   }
+}
 
-  if (/shamosh/i.test(textHint) || /shamosh/i.test(file.name)) {
-    fromName.cliente = "SHAMOSH";
-    fromName.expedienteSugerido = {
-      codigo: "EXP-000452",
-      nombre: "Venta Directa SHAMOSH",
-      confianza: 0.88,
+async function analyzeViaGemini(
+  file: File,
+  expedientes: ExpedienteMatchHint[],
+  apiKey: string,
+  textHint?: string,
+): Promise<DocumentoAiResultado> {
+  const mime = file.type || guessMimeType(file.name);
+  const prompt = buildDocumentAnalysisPrompt(file.name, expedientes, textHint);
+  const multimodal = isMultimodalDocument(mime, file.name);
+
+  const parts: Array<Record<string, unknown>> = [{ text: prompt }];
+  if (multimodal) {
+    parts.push({
+      inline_data: {
+        mime_type: mime,
+        data: await fileToBase64(file),
+      },
+    });
+  } else if (textHint) {
+    parts[0] = {
+      text: `${prompt}\n\n---\n${textHint}\n---`,
     };
+  } else {
+    // Excel/binarios sin texto: envía igual como octet-stream (Gemini puede fallar → caller hace fallback)
+    parts.push({
+      inline_data: {
+        mime_type: mime || "application/octet-stream",
+        data: await fileToBase64(file),
+      },
+    });
   }
 
-  const proveedor =
-    fromName.proveedor ??
-    (textHint.match(/proveedor[:\s]+([^\n,]+)/i)?.[1]?.trim() || undefined);
+  const models = [
+    DOCUMENT_ANALYSIS_MODEL,
+    "gemini-2.0-flash",
+    "gemini-1.5-flash",
+  ];
 
-  return {
+  let lastError: Error | null = null;
+  for (const model of models) {
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ role: "user", parts }],
+            generationConfig: {
+              responseMimeType: "application/json",
+              responseSchema: DOCUMENT_ANALYSIS_JSON_SCHEMA,
+              temperature: 0.2,
+            },
+          }),
+        },
+      );
+
+      if (!res.ok) {
+        const errText = await res.text();
+        lastError = new Error(`${model}: ${res.status} ${errText.slice(0, 200)}`);
+        continue;
+      }
+
+      const payload = (await res.json()) as {
+        candidates?: Array<{
+          content?: { parts?: Array<{ text?: string }> };
+        }>;
+      };
+      const text =
+        payload.candidates?.[0]?.content?.parts
+          ?.map((p) => p.text || "")
+          .join("") || "";
+      if (!text) {
+        lastError = new Error(`${model}: respuesta vacía`);
+        continue;
+      }
+
+      const raw = JSON.parse(text) as Record<string, unknown>;
+      return normalizeAiResult({
+        archivo: file.name,
+        raw: raw as Parameters<typeof normalizeAiResult>[0]["raw"],
+        expedientes,
+        provider: "gemini",
+        model,
+      });
+    } catch (e) {
+      lastError = e instanceof Error ? e : new Error(String(e));
+    }
+  }
+
+  throw lastError ?? new Error("Gemini no respondió");
+}
+
+/**
+ * Pipeline de análisis documental:
+ * 1) API Nest (si NEXT_PUBLIC_API_URL)
+ * 2) Gemini directo (API key en settings / env)
+ * 3) Heurística local + parser CFDI
+ */
+export async function analyzeDocument(
+  file: File,
+  expedientes: ExpedienteMatchHint[] = [],
+): Promise<DocumentoAiResultado> {
+  const textHint = await readTextHint(file);
+
+  const fromApi = await analyzeViaApi(file, expedientes);
+  if (fromApi) return fromApi;
+
+  const geminiKey = getGeminiApiKey();
+  if (geminiKey) {
+    try {
+      return await analyzeViaGemini(file, expedientes, geminiKey, textHint);
+    } catch {
+      const local = heuristicAnalyze({
+        archivo: file.name,
+        text: textHint,
+        size: file.size,
+        expedientes,
+      });
+      return {
+        ...local,
+        riesgos: [
+          ...(local.riesgos ?? []),
+          "Gemini falló; se usó análisis local",
+        ],
+      };
+    }
+  }
+
+  return heuristicAnalyze({
     archivo: file.name,
-    clasificacion: fromName.clasificacion ?? "Documento",
-    proveedor,
-    cliente: fromName.cliente,
-    monto: fromName.monto,
-    concepto: fromName.concepto,
-    proyecto: fromName.proyecto,
-    expedienteSugerido: fromName.expedienteSugerido,
-    duplicados: [],
-    campos: {
-      Archivo: file.name,
-      Tamaño: `${Math.max(1, Math.round(file.size / 1024))} KB`,
-      Clasificación: fromName.clasificacion ?? "Documento",
-      ...(proveedor ? { Proveedor: proveedor } : {}),
-      ...(fromName.monto != null ? { Monto: fromName.monto } : {}),
-      ...(fromName.concepto ? { Concepto: fromName.concepto } : {}),
-      ...(fromName.proyecto ? { Proyecto: fromName.proyecto } : {}),
-    },
-  };
+    text: textHint,
+    size: file.size,
+    expedientes,
+  });
 }

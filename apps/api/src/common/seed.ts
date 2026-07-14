@@ -209,6 +209,9 @@ export const documentoAiSeed: DocumentoAiResultado = {
   monto: 450000,
   concepto: 'Concreto',
   proyecto: 'Planta Norte',
+  resumen: 'Cotización de concreto CEMEX para Planta Norte.',
+  provider: 'heuristic',
+  confianzaExtraccion: 0.7,
   expedienteSugerido: {
     codigo: 'EXP-000875',
     nombre: 'Planta Norte',

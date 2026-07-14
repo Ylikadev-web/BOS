@@ -47,11 +47,16 @@ export function UserMenu() {
           <UserRound />
           Ver perfil
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/workspace">
-            <Settings />
-            Ir a Workspace
-          </Link>
+        <DropdownMenuItem
+          onClick={() => {
+            toast.message("Análisis documental", {
+              description:
+                "Abre Ingestar IA → API key y pega tu clave de Gemini (Google AI Studio).",
+            });
+          }}
+        >
+          <Settings />
+          Configurar Gemini
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

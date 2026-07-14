@@ -8,9 +8,12 @@ import {
   FileSpreadsheet,
   FileText,
   ImageIcon,
+  KeyRound,
   Loader2,
   Mail,
+  Sparkles,
   Upload,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { DocumentoAiResultado } from "@ylika/shared";
@@ -24,7 +27,14 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { analyzeDocument, isAllowedDocument } from "@/lib/ai-ingest";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  analyzeDocument,
+  getGeminiApiKey,
+  isAllowedDocument,
+  setGeminiApiKey,
+} from "@/lib/ai-ingest";
 import { expedienteHref } from "@/lib/routes";
 import { useYlikaStore } from "@/lib/store";
 
@@ -38,21 +48,42 @@ export function DocumentIngestDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const router = useRouter();
-  const { runAction } = useYlikaStore();
+  const { runAction, expedientes } = useYlikaStore();
   const inputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState<Step>("drop");
   const [result, setResult] = useState<DocumentoAiResultado | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [showKey, setShowKey] = useState(false);
+  const [apiKey, setApiKey] = useState("");
+  const [hasKey, setHasKey] = useState(false);
 
   const reset = () => {
     setStep("drop");
     setResult(null);
     setDragging(false);
+    setShowKey(false);
   };
 
   const handleClose = (next: boolean) => {
     if (!next) reset();
     onOpenChange(next);
+  };
+
+  const onOpenKey = () => {
+    setApiKey(getGeminiApiKey());
+    setHasKey(Boolean(getGeminiApiKey()));
+    setShowKey(true);
+  };
+
+  const saveKey = () => {
+    setGeminiApiKey(apiKey);
+    setHasKey(Boolean(apiKey.trim()));
+    setShowKey(false);
+    toast.success(
+      apiKey.trim()
+        ? "Gemini configurado — listo para analizar PDFs e imágenes"
+        : "Clave eliminada",
+    );
   };
 
   const processFile = async (file: File) => {
@@ -62,14 +93,23 @@ export function DocumentIngestDialog({
     }
     setStep("analyzing");
     try {
-      // Small delay so the analyzing state is visible
-      const [analyzed] = await Promise.all([
-        analyzeDocument(file),
-        new Promise((r) => setTimeout(r, 900)),
-      ]);
+      const hints = expedientes.map((e) => ({
+        codigo: e.codigo,
+        nombre: e.nombre,
+        clienteNombre: e.clienteNombre,
+      }));
+      const analyzed = await analyzeDocument(file, hints);
       setResult(analyzed);
       setStep("result");
-      toast.success("Documento analizado");
+      const engine =
+        analyzed.provider === "gemini"
+          ? `Gemini (${analyzed.model ?? "flash"})`
+          : analyzed.provider === "api"
+            ? "API YLIKA"
+            : analyzed.provider === "local"
+              ? "Parser CFDI"
+              : "Análisis local";
+      toast.success(`Analizado con ${engine}`);
     } catch {
       toast.error("No se pudo analizar el documento");
       setStep("drop");
@@ -110,6 +150,13 @@ export function DocumentIngestDialog({
     router.push(expedienteHref(result.expedienteSugerido.codigo));
   };
 
+  const providerLabel = (r: DocumentoAiResultado) => {
+    if (r.provider === "gemini") return `Gemini · ${r.model ?? "2.5 Flash"}`;
+    if (r.provider === "api") return "API YLIKA + Gemini";
+    if (r.provider === "local") return "Parser CFDI local";
+    return "Heurística local";
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg">
@@ -118,8 +165,8 @@ export function DocumentIngestDialog({
             Ingestión con IA
           </DialogTitle>
           <DialogDescription>
-            Sube PDF, XML, Excel, imagen o correo. La IA clasifica, extrae y
-            sugiere el expediente.
+            Gemini analiza PDF, XML CFDI, Excel, imagen o correo: clasifica,
+            extrae montos/RFCs y sugiere el expediente.
           </DialogDescription>
         </DialogHeader>
 
@@ -132,7 +179,7 @@ export function DocumentIngestDialog({
         />
 
         <AnimatePresence mode="wait">
-          {step === "drop" && (
+          {step === "drop" && !showKey && (
             <motion.div
               key="drop"
               initial={{ opacity: 0, y: 8 }}
@@ -140,6 +187,25 @@ export function DocumentIngestDialog({
               exit={{ opacity: 0, y: -8 }}
               className="space-y-4"
             >
+              <div className="flex items-center justify-between gap-2 rounded-xl border border-border/80 bg-secondary/40 px-3 py-2 text-xs">
+                <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                  <Sparkles className="size-3.5 text-ylika-teal" />
+                  {getGeminiApiKey() || process.env.NEXT_PUBLIC_API_URL
+                    ? "Gemini listo para análisis multimodal"
+                    : "Sin clave: solo heurística / CFDI XML"}
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 gap-1 px-2"
+                  onClick={onOpenKey}
+                >
+                  <KeyRound className="size-3.5" />
+                  API key
+                </Button>
+              </div>
+
               <button
                 type="button"
                 onClick={() => inputRef.current?.click()}
@@ -191,6 +257,62 @@ export function DocumentIngestDialog({
             </motion.div>
           )}
 
+          {step === "drop" && showKey && (
+            <motion.div
+              key="key"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="space-y-4"
+            >
+              <div className="space-y-2">
+                <Label htmlFor="gemini-key">
+                  Google AI Studio · Gemini API key
+                </Label>
+                <Input
+                  id="gemini-key"
+                  type="password"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder="AIza…"
+                  autoComplete="off"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Se guarda solo en este navegador. Modelo:{" "}
+                  <span className="font-medium text-foreground">
+                    gemini-2.5-flash
+                  </span>{" "}
+                  (óptimo para documentos). Obtén una clave en{" "}
+                  <a
+                    className="text-ylika-teal underline"
+                    href="https://aistudio.google.com/apikey"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Google AI Studio
+                  </a>
+                  .
+                </p>
+                {hasKey && (
+                  <p className="text-xs text-ylika-success">
+                    Ya hay una clave guardada.
+                  </p>
+                )}
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowKey(false)}>
+                  Volver
+                </Button>
+                <Button
+                  className="bg-ylika-teal hover:bg-ylika-teal/90"
+                  onClick={saveKey}
+                >
+                  Guardar
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
           {step === "analyzing" && (
             <motion.div
               key="analyzing"
@@ -200,9 +322,9 @@ export function DocumentIngestDialog({
               className="flex flex-col items-center gap-3 py-16"
             >
               <Loader2 className="size-8 animate-spin text-ylika-teal" />
-              <p className="font-medium">Analizando documento…</p>
+              <p className="font-medium">Gemini analizando documento…</p>
               <p className="text-sm text-muted-foreground">
-                Clasificando · Extrayendo · Buscando expediente
+                Clasificando · Extrayendo · Emparejando expediente
               </p>
             </motion.div>
           )}
@@ -216,15 +338,27 @@ export function DocumentIngestDialog({
               className="space-y-4"
             >
               <div className="rounded-xl border bg-card p-4">
-                <div className="mb-3 flex items-center gap-2">
+                <div className="mb-3 flex flex-wrap items-center gap-2">
                   <CheckCircle2 className="size-4 text-ylika-success" />
                   <span className="truncate text-sm font-medium">
                     {result.archivo}
                   </span>
-                  <Badge className="ml-auto shrink-0 bg-ylika-teal-soft text-ylika-teal hover:bg-ylika-teal-soft">
+                  <Badge className="bg-ylika-teal-soft text-ylika-teal hover:bg-ylika-teal-soft">
                     {result.clasificacion}
                   </Badge>
+                  <Badge variant="outline" className="ml-auto text-[10px]">
+                    {providerLabel(result)}
+                    {result.confianzaExtraccion != null &&
+                      ` · ${Math.round(result.confianzaExtraccion * 100)}%`}
+                  </Badge>
                 </div>
+
+                {result.resumen && (
+                  <p className="mb-3 text-sm leading-relaxed text-foreground/90">
+                    {result.resumen}
+                  </p>
+                )}
+
                 <dl className="grid grid-cols-2 gap-3 text-sm">
                   {result.proveedor && (
                     <div>
@@ -241,20 +375,73 @@ export function DocumentIngestDialog({
                   <div>
                     <dt className="text-muted-foreground">Monto</dt>
                     <dd className="font-medium">
-                      {formatCurrency(result.monto ?? 0)}
+                      {result.monto != null
+                        ? `${formatCurrency(result.monto)}${
+                            result.moneda && result.moneda !== "MXN"
+                              ? ` ${result.moneda}`
+                              : ""
+                          }`
+                        : "—"}
                     </dd>
                   </div>
                   <div>
                     <dt className="text-muted-foreground">Concepto</dt>
                     <dd className="font-medium">{result.concepto ?? "—"}</dd>
                   </div>
+                  {result.fecha && (
+                    <div>
+                      <dt className="text-muted-foreground">Fecha</dt>
+                      <dd className="font-medium">{result.fecha}</dd>
+                    </div>
+                  )}
                   {result.proyecto && (
-                    <div className="col-span-2">
+                    <div>
                       <dt className="text-muted-foreground">Proyecto</dt>
                       <dd className="font-medium">{result.proyecto}</dd>
                     </div>
                   )}
+                  {result.rfcEmisor && (
+                    <div>
+                      <dt className="text-muted-foreground">RFC emisor</dt>
+                      <dd className="font-mono text-xs font-medium">
+                        {result.rfcEmisor}
+                      </dd>
+                    </div>
+                  )}
+                  {result.rfcReceptor && (
+                    <div>
+                      <dt className="text-muted-foreground">RFC receptor</dt>
+                      <dd className="font-mono text-xs font-medium">
+                        {result.rfcReceptor}
+                      </dd>
+                    </div>
+                  )}
                 </dl>
+
+                {result.entidadesDetectadas &&
+                  result.entidadesDetectadas.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {result.entidadesDetectadas.slice(0, 8).map((e) => (
+                        <Badge key={e} variant="secondary" className="text-[10px]">
+                          {e}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+
+                {result.riesgos && result.riesgos.length > 0 && (
+                  <div className="mt-3 space-y-1 rounded-lg border border-amber-200/80 bg-amber-50/80 p-3 dark:border-amber-900 dark:bg-amber-950/30">
+                    {result.riesgos.map((r) => (
+                      <p
+                        key={r}
+                        className="flex items-start gap-1.5 text-xs text-amber-800 dark:text-amber-300"
+                      >
+                        <AlertTriangle className="mt-0.5 size-3 shrink-0" />
+                        {r}
+                      </p>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {result.expedienteSugerido ? (
@@ -277,15 +464,23 @@ export function DocumentIngestDialog({
                     >
                       Asociar a expediente
                     </Button>
-                    <Button variant="outline" onClick={() => handleClose(false)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleClose(false)}
+                    >
                       Descartar
                     </Button>
                   </div>
                 </div>
               ) : (
-                <Button variant="outline" onClick={() => handleClose(false)}>
-                  Cerrar
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="outline" onClick={onOpenKey}>
+                    Configurar Gemini
+                  </Button>
+                  <Button variant="outline" onClick={() => handleClose(false)}>
+                    Cerrar
+                  </Button>
+                </div>
               )}
             </motion.div>
           )}

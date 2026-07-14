@@ -135,22 +135,20 @@ export interface Cliente {
   estado: "activo" | "riesgo" | "inactivo";
 }
 
-export interface DocumentoAiResultado {
-  archivo: string;
-  clasificacion: string;
-  proveedor?: string;
-  cliente?: string;
-  monto?: number;
-  concepto?: string;
-  proyecto?: string;
-  expedienteSugerido?: {
-    codigo: string;
-    nombre: string;
-    confianza: number;
-  };
-  duplicados?: string[];
-  campos: Record<string, string | number>;
-}
+export {
+  DOCUMENT_ANALYSIS_MODEL,
+  DOCUMENT_ANALYSIS_JSON_SCHEMA,
+  buildDocumentAnalysisPrompt,
+  guessMimeType,
+  isMultimodalDocument,
+  normalizeAiResult,
+  matchExpedienteHeuristic,
+  parseCfdiXml,
+  heuristicAnalyze,
+  type DocumentoAiProvider,
+  type DocumentoAiResultado,
+  type ExpedienteMatchHint,
+} from "./document-analysis";
 
 export function formatCurrency(value: number): string {
   return new Intl.NumberFormat("es-MX", {
