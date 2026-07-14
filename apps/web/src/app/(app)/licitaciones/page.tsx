@@ -7,7 +7,6 @@ import {
   Download,
   ExternalLink,
   FileText,
-  Filter,
   Info,
   Landmark,
   Link2,
@@ -19,33 +18,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  LICITACION_CATEGORIES,
   LICITACION_FUENTES,
+  LICITACION_RUBROS,
   formatFechaCorta,
   licitacionesNoIniciadas,
-  type LicitacionCategoria,
   type LicitacionItem,
+  type LicitacionRubro,
 } from "@/data/licitaciones";
 
 export default function LicitacionesPage() {
-  const [categoria, setCategoria] = useState<LicitacionCategoria | "todas">(
-    "todas",
-  );
+  const [rubro, setRubro] = useState<LicitacionRubro | "todos">("todos");
   const [q, setQ] = useState("");
-  const [soloLicitacion, setSoloLicitacion] = useState(false);
 
   const upcoming = useMemo(() => licitacionesNoIniciadas(), []);
 
   const items = useMemo(() => {
     const query = q.trim().toLowerCase();
     return upcoming.filter((item) => {
-      if (categoria !== "todas" && item.categoria !== categoria) return false;
-      if (
-        soloLicitacion &&
-        !/licitaci[oó]n\s+p[uú]blica/i.test(item.tipoProcedimiento)
-      ) {
-        return false;
-      }
+      if (rubro !== "todos" && item.rubro !== rubro) return false;
       if (!query) return true;
       const hay = [
         item.titulo,
@@ -53,19 +43,19 @@ export default function LicitacionesPage() {
         item.codigo,
         item.referencia,
         item.entidad,
-        item.tipoProcedimiento,
+        item.rubro,
       ]
         .join(" ")
         .toLowerCase();
       return hay.includes(query);
     });
-  }, [categoria, q, soloLicitacion, upcoming]);
+  }, [rubro, q, upcoming]);
 
   const counts = useMemo(() => {
-    const map: Record<string, number> = { todas: upcoming.length };
-    for (const c of LICITACION_CATEGORIES) {
-      if (c.id === "todas") continue;
-      map[c.id] = upcoming.filter((i) => i.categoria === c.id).length;
+    const map: Record<string, number> = { todos: upcoming.length };
+    for (const r of LICITACION_RUBROS) {
+      if (r.id === "todos") continue;
+      map[r.id] = upcoming.filter((i) => i.rubro === r.id).length;
     }
     return map;
   }, [upcoming]);
@@ -87,89 +77,67 @@ export default function LicitacionesPage() {
             Licitaciones
           </p>
           <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight">
-            Procedimientos que aún no inician
+            Adquisiciones y suministro
           </h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">
-            Solo convocatorias con{" "}
+            Orientado a integradoras: compra de materiales, equipo e insumos.
+            Solo procedimientos{" "}
+            <span className="font-medium text-foreground">sin apertura aún</span>{" "}
+            y con{" "}
             <span className="font-medium text-foreground">
-              documento oficial en PDF
-            </span>{" "}
-            y apertura de proposiciones todavía pendiente.
+              documento oficial descargable
+            </span>
+            . Se excluyen mantenimiento, limpieza y vigilancia.
           </p>
         </div>
-        <Button asChild variant="outline" className="gap-2">
-          <a
-            href="https://comprasmx.buengobierno.gob.mx/sitiopublico/#/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <Landmark className="size-4" />
-            Abrir Compras MX
-            <ExternalLink className="size-3.5 opacity-70" />
-          </a>
-        </Button>
+        <div className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground tabular-nums">
+            {upcoming.length}
+          </span>{" "}
+          vigentes
+        </div>
       </div>
 
       <div className="flex gap-3 rounded-2xl border border-ylika-teal/25 bg-ylika-teal-soft/40 p-4 text-sm">
         <Info className="mt-0.5 size-4 shrink-0 text-ylika-teal" />
         <div className="space-y-1 text-muted-foreground">
           <p>
-            <span className="font-medium text-foreground">Criterio:</span> se
-            listan procedimientos cuya fecha de presentación/apertura es
-            posterior a hoy. Cada ficha incluye el{" "}
-            <span className="font-medium text-foreground">
-              PDF oficial de la convocatoria
-            </span>{" "}
-            publicado por la dependencia (no el portal con captcha).
-          </p>
-          <p>
-            Compras MX no expone URLs permanentes de PDF sin captcha; por eso
-            priorizamos repositorios institucionales verificados (INE, INER,
-            etc.).
+            Fuentes actuales:{" "}
+            <span className="font-medium text-foreground">Puebla</span>,{" "}
+            <span className="font-medium text-foreground">CDMX</span> y{" "}
+            <span className="font-medium text-foreground">Sinaloa (Salud)</span>{" "}
+            — portales que publican bases en PDF/DOC/ZIP sin captcha. Compras MX
+            federal sigue bloqueando PDFs permanentes.
           </p>
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Buscar por título, dependencia, código…"
-            className="pl-9"
-          />
-        </div>
-        <Button
-          type="button"
-          variant={soloLicitacion ? "default" : "outline"}
-          className={cn(
-            "gap-2",
-            soloLicitacion && "bg-ylika-teal hover:bg-ylika-teal/90",
-          )}
-          onClick={() => setSoloLicitacion((v) => !v)}
-        >
-          <Filter className="size-4" />
-          Solo licitación pública
-        </Button>
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Buscar material, equipo, dependencia, código…"
+          className="pl-9"
+        />
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {LICITACION_CATEGORIES.map((c) => (
+        {LICITACION_RUBROS.map((r) => (
           <button
-            key={c.id}
+            key={r.id}
             type="button"
-            onClick={() => setCategoria(c.id)}
+            onClick={() => setRubro(r.id)}
             className={cn(
               "rounded-full border px-3 py-1.5 text-sm transition",
-              categoria === c.id
+              rubro === r.id
                 ? "border-ylika-teal bg-ylika-teal-soft text-ylika-teal font-medium"
                 : "border-border/80 text-muted-foreground hover:bg-secondary",
             )}
           >
-            {c.label}
+            {r.label}
             <span className="ml-1.5 tabular-nums opacity-70">
-              {counts[c.id] ?? 0}
+              {counts[r.id] ?? 0}
             </span>
           </button>
         ))}
@@ -178,8 +146,7 @@ export default function LicitacionesPage() {
       <div className="grid gap-3">
         {items.length === 0 && (
           <p className="rounded-2xl border border-border/80 bg-card p-6 text-sm text-muted-foreground">
-            No hay procedimientos sin iniciar con ese filtro. Cuando caduque la
-            apertura, desaparecen de esta lista.
+            No hay adquisiciones sin iniciar con ese filtro.
           </p>
         )}
         {items.map((item) => (
@@ -191,9 +158,6 @@ export default function LicitacionesPage() {
         <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold tracking-tight">
           Fuentes oficiales
         </h2>
-        <p className="text-sm text-muted-foreground">
-          Sitios donde se publican convocatorias con PDF descargable.
-        </p>
         <div className="grid gap-3 md:grid-cols-2">
           {LICITACION_FUENTES.map((f) => (
             <a
@@ -205,11 +169,7 @@ export default function LicitacionesPage() {
             >
               <div className="flex items-start gap-3">
                 <span className="mt-0.5 flex size-8 items-center justify-center rounded-lg bg-secondary text-ylika-teal">
-                  {f.tipo === "dataset" ? (
-                    <Download className="size-4" />
-                  ) : (
-                    <Landmark className="size-4" />
-                  )}
+                  <Landmark className="size-4" />
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="font-medium group-hover:text-ylika-teal">
@@ -236,10 +196,14 @@ function LicitacionRow({
   item: LicitacionItem;
   onCopy: (url: string) => void;
 }) {
-  const pdf =
-    item.documentos.find((d) => d.formato === "pdf" && d.tipo === "convocatoria")
-      ?.url ?? item.urlDocumentoOficial;
+  const doc =
+    item.documentos.find((d) => d.tipo === "convocatoria")?.url ??
+    item.urlDocumentoOficial;
+  const fmt =
+    item.documentos.find((d) => d.tipo === "convocatoria")?.formato ?? "pdf";
   const portal = item.urlPortal;
+  const rubroLabel =
+    LICITACION_RUBROS.find((r) => r.id === item.rubro)?.label ?? item.rubro;
 
   return (
     <article className="rounded-2xl border border-border/80 bg-card p-5">
@@ -249,18 +213,20 @@ function LicitacionRow({
             <Badge className="bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400">
               Sin iniciar apertura
             </Badge>
-            <Badge
-              variant="secondary"
-              className="capitalize bg-ylika-teal-soft text-ylika-teal hover:bg-ylika-teal-soft"
-            >
-              {item.categoria}
-            </Badge>
+            {rubroLabel && (
+              <Badge
+                variant="secondary"
+                className="bg-ylika-teal-soft text-ylika-teal hover:bg-ylika-teal-soft"
+              >
+                {rubroLabel}
+              </Badge>
+            )}
             <Badge variant="outline" className="font-normal">
-              {item.tipoProcedimiento || item.tipoContratacion}
+              {item.tipoProcedimiento}
             </Badge>
-            {item.caracter && (
+            {item.entidad && (
               <Badge variant="outline" className="font-normal">
-                {item.caracter}
+                {item.entidad}
               </Badge>
             )}
           </div>
@@ -270,17 +236,12 @@ function LicitacionRow({
           <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <Building2 className="size-3.5" />
-              {item.institucion || "Institución no especificada"}
+              {item.institucion}
             </span>
-            {item.entidad && <span>· {item.entidad}</span>}
           </p>
           <p className="font-mono text-xs text-muted-foreground">
             {item.codigo}
-            {item.referencia && item.referencia !== item.codigo
-              ? ` · ${item.referencia}`
-              : ""}
           </p>
-
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <Calendar className="size-3.5" />
@@ -296,18 +257,14 @@ function LicitacionRow({
               <span>Fallo est. {formatFechaCorta(item.fechaFallo)}</span>
             )}
           </div>
-
-          {item.uc && (
-            <p className="text-xs text-muted-foreground">UC: {item.uc}</p>
-          )}
           <p className="text-xs text-muted-foreground">{item.fuente}</p>
         </div>
 
         <div className="flex shrink-0 flex-wrap gap-2 lg:flex-col lg:items-stretch">
           <Button asChild className="gap-2 bg-ylika-teal hover:bg-ylika-teal/90">
-            <a href={pdf} target="_blank" rel="noreferrer">
+            <a href={doc} target="_blank" rel="noreferrer">
               <FileText className="size-4" />
-              Documento oficial (PDF)
+              Documento oficial ({fmt.toUpperCase()})
               <Download className="size-3.5 opacity-80" />
             </a>
           </Button>
@@ -324,10 +281,10 @@ function LicitacionRow({
             type="button"
             variant="outline"
             className="gap-2"
-            onClick={() => onCopy(pdf)}
+            onClick={() => onCopy(doc)}
           >
             <Link2 className="size-4" />
-            Copiar PDF
+            Copiar documento
           </Button>
         </div>
       </div>

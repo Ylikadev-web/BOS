@@ -2,6 +2,7 @@ import type {
   LicitacionItem,
   LicitacionCategoria,
   LicitacionFuente,
+  LicitacionRubro,
 } from "./licitaciones-types";
 import sample from "./licitaciones-sample.json";
 
@@ -10,6 +11,7 @@ export type {
   LicitacionCategoria,
   LicitacionFuente,
   LicitacionDocumento,
+  LicitacionRubro,
 } from "./licitaciones-types";
 
 export const LICITACION_CATEGORIES: {
@@ -20,17 +22,17 @@ export const LICITACION_CATEGORIES: {
   {
     id: "todas",
     label: "Todas",
-    description: "Procedimientos aún no iniciados",
+    description: "Adquisiciones y suministro aún sin apertura",
   },
   {
     id: "adquisiciones",
     label: "Adquisiciones",
-    description: "Bienes y suministros",
+    description: "Bienes, materiales y equipo",
   },
   {
     id: "servicios",
     label: "Servicios",
-    description: "Servicios al sector público",
+    description: "Servicios (poco relevantes para integradoras)",
   },
   {
     id: "obras",
@@ -49,44 +51,58 @@ export const LICITACION_CATEGORIES: {
   },
 ];
 
-/** Portales oficiales donde se publican convocatorias con PDF. */
+export const LICITACION_RUBROS: {
+  id: LicitacionRubro | "todos";
+  label: string;
+}[] = [
+  { id: "todos", label: "Todos los rubros" },
+  { id: "medico", label: "Médico / laboratorio" },
+  { id: "tecnologia", label: "Equipamiento / tecnología" },
+  { id: "materiales", label: "Materiales / útiles" },
+  { id: "insumos_industriales", label: "Insumos industriales" },
+  { id: "infraestructura", label: "Infraestructura" },
+  { id: "mobiliario", label: "Mobiliario" },
+  { id: "vehicular", label: "Vehicular" },
+  { id: "agro", label: "Agro / rural" },
+  { id: "vestuario", label: "Vestuario" },
+  { id: "suministros", label: "Otros suministros" },
+];
+
+/** Portales con convocatorias descargables (PDF/DOC/ZIP). */
 export const LICITACION_FUENTES: LicitacionFuente[] = [
+  {
+    id: "puebla",
+    nombre: "Licitaciones Puebla · Adquisiciones",
+    descripcion: "Bases vigentes en PDF del Gobierno del Estado de Puebla.",
+    url: "https://licitaciones.puebla.gob.mx/index.php/aquisiciones-bienes-y-servicios/convocatorias-aquisiciones-bienes-y-servicios",
+    tipo: "portal",
+  },
+  {
+    id: "cdmx-concurso",
+    nombre: "Concurso Digital CDMX",
+    descripcion: "Convocatorias abiertas con bases y anexo técnico en PDF.",
+    url: "https://concursodigital.finanzas.cdmx.gob.mx/convocatorias_publicas",
+    tipo: "portal",
+  },
+  {
+    id: "sinaloa-salud",
+    nombre: "CompraNet Sinaloa · Salud",
+    descripcion: "Adquisiciones de Servicios de Salud de Sinaloa.",
+    url: "https://compranet.sinaloa.gob.mx/servicios-de-salud-de-sinaloa-sss-adquisiciones",
+    tipo: "portal",
+  },
   {
     id: "compras-mx-portal",
     nombre: "Compras MX · Difusión pública",
     descripcion:
-      "Portal federal. Los PDF del expediente suelen requerir captcha; priorizamos PDFs institucionales directos.",
+      "Portal federal. Los PDF del expediente suelen requerir captcha.",
     url: "https://comprasmx.buengobierno.gob.mx/sitiopublico/#/",
-    tipo: "portal",
-  },
-  {
-    id: "ine-licitaciones",
-    nombre: "INE · Licitaciones presenciales",
-    descripcion: "Convocatorias oficiales en PDF del Instituto Nacional Electoral.",
-    url: "https://www.ine.mx/licitaciones-contrataciones-presenciales/",
-    tipo: "portal",
-  },
-  {
-    id: "iner",
-    nombre: "INER · Convocatorias",
-    descripcion:
-      "Instituto Nacional de Enfermedades Respiratorias — PDFs de convocatoria públicos.",
-    url: "http://iner.salud.gob.mx/",
-    tipo: "portal",
-  },
-  {
-    id: "compras-mx-datos",
-    nombre: "Compras MX · Datos abiertos",
-    descripcion:
-      "CSV federales (histórico). No incluyen PDF ni suelen cubrir procedimientos futuros.",
-    url: "https://comprasmx.buengobierno.gob.mx/datos-abiertos",
     tipo: "portal",
   },
 ];
 
 export const licitacionesSeed = sample as LicitacionItem[];
 
-/** Inicio del día local — apertura posterior = aún no inicia. */
 export function startOfToday(): Date {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
@@ -100,14 +116,30 @@ export function parseIsoDate(iso: string): Date | null {
   return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
 }
 
-/** Procedimiento cuya apertura de proposiciones aún no ocurre. */
+/** Apertura de proposiciones aún no ocurrida (hoy o futura). */
 export function isLicitacionNoIniciada(
   item: LicitacionItem,
   now: Date = startOfToday(),
 ): boolean {
   const apertura = parseIsoDate(item.fechaApertura);
   if (!apertura) return false;
-  return apertura.getTime() > now.getTime();
+  return apertura.getTime() >= now.getTime();
+}
+
+const MANTENIMIENTO_RE =
+  /\bmantenimiento\b|\blimpieza\b|\bvigilancia\b|\blavander/i;
+
+/** Perfil integradora: compra/suministro de bienes, no servicios de mantenimiento. */
+export function isLicitacionSuministro(item: LicitacionItem): boolean {
+  if (item.categoria === "adquisiciones") return true;
+  if (item.tipoContratacion?.toUpperCase().includes("ADQUISIC")) return true;
+  const blob = `${item.titulo} ${item.tipoProcedimiento}`;
+  if (MANTENIMIENTO_RE.test(blob) && !/adquisici[oó]n/i.test(blob)) {
+    return false;
+  }
+  return /adquisici[oó]n|suministro|material|equipo|insumo|mobiliario/i.test(
+    blob,
+  );
 }
 
 export function licitacionesNoIniciadas(
@@ -116,6 +148,7 @@ export function licitacionesNoIniciadas(
 ): LicitacionItem[] {
   return items
     .filter((item) => isLicitacionNoIniciada(item, now))
+    .filter(isLicitacionSuministro)
     .sort((a, b) => a.fechaApertura.localeCompare(b.fechaApertura));
 }
 

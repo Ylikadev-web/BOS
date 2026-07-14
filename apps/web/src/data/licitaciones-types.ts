@@ -5,11 +5,24 @@ export type LicitacionCategoria =
   | "arrendamientos"
   | "otros";
 
+/** Rubros útiles para integradoras / suministro de bienes. */
+export type LicitacionRubro =
+  | "materiales"
+  | "medico"
+  | "tecnologia"
+  | "insumos_industriales"
+  | "mobiliario"
+  | "vehicular"
+  | "vestuario"
+  | "agro"
+  | "infraestructura"
+  | "suministros";
+
 export type LicitacionDocumento = {
   tipo: "convocatoria" | "portal" | "anexo" | "dataset";
   label: string;
   url: string;
-  formato: "pdf" | "portal" | "csv" | "xlsx" | "zip";
+  formato: "pdf" | "portal" | "csv" | "xlsx" | "zip" | "doc";
 };
 
 export type LicitacionItem = {
@@ -20,23 +33,20 @@ export type LicitacionItem = {
   institucion: string;
   uc: string;
   categoria: LicitacionCategoria;
+  rubro?: LicitacionRubro;
   tipoProcedimiento: string;
   tipoContratacion: string;
   caracter: string;
   entidad: string;
   /** ISO date YYYY-MM-DD */
   fechaPublicacion: string;
-  /** ISO date — junta de aclaraciones (si aplica) */
   fechaJunta?: string;
-  /** ISO date — presentación y apertura (criterio de “aún no inicia”) */
+  /** ISO date — presentación/apertura (criterio de “aún no inicia”) */
   fechaApertura: string;
-  /** ISO date — fallo estimado */
   fechaFallo?: string;
   ley: string;
   ordenGobierno: string;
-  /** URL del PDF oficial de convocatoria (documento principal) */
   urlDocumentoOficial: string;
-  /** Expediente en portal público, si existe */
   urlPortal?: string;
   uuid?: string;
   fuente: string;

@@ -1,114 +1,646 @@
 [
   {
-    "id": "iner-ia-n-65-2026",
-    "codigo": "IA-12-NCD-012NCD002-N-65-2026",
-    "referencia": "IA-12-NCD-012NCD002-N-65-2026",
-    "titulo": "Servicio de mantenimiento preventivo y correctivo a equipos de lavandería",
-    "institucion": "Instituto Nacional de Enfermedades Respiratorias Ismael Cosío Villegas (INER)",
-    "uc": "Departamento de Contrataciones de Servicios y Obra Pública",
-    "categoria": "servicios",
-    "tipoProcedimiento": "Invitación a cuando menos tres personas nacional electrónica",
-    "tipoContratacion": "SERVICIOS",
+    "id": "gep-spfa-lpn-159-371-2026",
+    "codigo": "GEP-SPFA-LPN-159-371/2026",
+    "referencia": "GEP-SPFA-LPN-159-371/2026",
+    "titulo": "Adquisición de material genético pecuario",
+    "institucion": "Secretaría de Agricultura y Desarrollo Rural · Gobierno del Estado de Puebla",
+    "uc": "Secretaría de Agricultura y Desarrollo Rural",
+    "categoria": "adquisiciones",
+    "rubro": "agro",
+    "tipoProcedimiento": "Licitación pública nacional",
+    "tipoContratacion": "ADQUISICIONES",
     "caracter": "Nacional",
-    "entidad": "Ciudad de México",
-    "fechaPublicacion": "2026-07-07",
-    "fechaApertura": "2026-07-20",
-    "fechaFallo": "2026-07-27",
-    "ley": "Ley de Adquisiciones, Arrendamientos y Servicios del Sector Público",
-    "ordenGobierno": "APF",
-    "urlDocumentoOficial": "http://iner.salud.gob.mx/descargas/licitaciones/serviciosmto2026/IA-12-NCD-012NCD002-N-65-2026.pdf",
-    "urlPortal": "https://comprasmx.buengobierno.gob.mx/sitiopublico/#/",
-    "fuente": "INER · Convocatoria oficial (PDF institucional)",
-    "documentos": [
-      {
-        "tipo": "convocatoria",
-        "label": "Descargar convocatoria oficial (PDF)",
-        "url": "http://iner.salud.gob.mx/descargas/licitaciones/serviciosmto2026/IA-12-NCD-012NCD002-N-65-2026.pdf",
-        "formato": "pdf"
-      },
-      {
-        "tipo": "portal",
-        "label": "Buscar en Compras MX",
-        "url": "https://comprasmx.buengobierno.gob.mx/sitiopublico/#/",
-        "formato": "portal"
-      }
-    ]
-  },
-  {
-    "id": "iner-ia-n-67-2026",
-    "codigo": "IA-12-NCD-012NCD002-N-67-2026",
-    "referencia": "IA-12-NCD-012NCD002-N-67-2026",
-    "titulo": "Servicio de mantenimiento preventivo y correctivo a equipos de cocina",
-    "institucion": "Instituto Nacional de Enfermedades Respiratorias Ismael Cosío Villegas (INER)",
-    "uc": "Departamento de Contrataciones de Servicios y Obra Pública",
-    "categoria": "servicios",
-    "tipoProcedimiento": "Invitación a cuando menos tres personas nacional electrónica",
-    "tipoContratacion": "SERVICIOS",
-    "caracter": "Nacional",
-    "entidad": "Ciudad de México",
-    "fechaPublicacion": "2026-07-10",
-    "fechaJunta": "2026-07-15",
-    "fechaApertura": "2026-07-24",
-    "fechaFallo": "2026-07-30",
-    "ley": "Ley de Adquisiciones, Arrendamientos y Servicios del Sector Público",
-    "ordenGobierno": "APF",
-    "urlDocumentoOficial": "http://iner.salud.gob.mx/descargas/licitaciones/serviciosmto2026/IA-12-NCD-012NCD002-N-67-2026.pdf",
-    "urlPortal": "https://comprasmx.buengobierno.gob.mx/sitiopublico/#/",
-    "fuente": "INER · Convocatoria oficial (PDF institucional)",
-    "documentos": [
-      {
-        "tipo": "convocatoria",
-        "label": "Descargar convocatoria oficial (PDF)",
-        "url": "http://iner.salud.gob.mx/descargas/licitaciones/serviciosmto2026/IA-12-NCD-012NCD002-N-67-2026.pdf",
-        "formato": "pdf"
-      },
-      {
-        "tipo": "portal",
-        "label": "Buscar en Compras MX",
-        "url": "https://comprasmx.buengobierno.gob.mx/sitiopublico/#/",
-        "formato": "portal"
-      }
-    ]
-  },
-  {
-    "id": "ine-lpn-op-002-2026",
-    "codigo": "INE-LPN-OP/002/2026",
-    "referencia": "INE-LPN-OP/002/2026",
-    "titulo": "Construcción del edificio sede para la Junta Local Ejecutiva en el Estado de Nuevo León",
-    "institucion": "Instituto Nacional Electoral (INE)",
-    "uc": "Dirección de Obras y Conservación",
-    "categoria": "obras",
-    "tipoProcedimiento": "Licitación pública nacional presencial",
-    "tipoContratacion": "OBRA PÚBLICA",
-    "caracter": "Nacional",
-    "entidad": "Nuevo León",
-    "fechaPublicacion": "2026-06-22",
-    "fechaJunta": "2026-06-29",
+    "entidad": "Puebla",
+    "fechaPublicacion": "2026-06-30",
     "fechaApertura": "2026-07-15",
-    "fechaFallo": "2026-08-07",
-    "ley": "Reglamento del INE en Materia de Obras Públicas y Servicios Relacionados",
-    "ordenGobierno": "Autónomo",
-    "urlDocumentoOficial": "https://www.ine.mx/wp-content/uploads/2026/06/INE-LPN-OP-002-2026-CONV.pdf",
-    "urlPortal": "https://www.ine.mx/licitaciones-contrataciones-presenciales/",
-    "fuente": "INE · Convocatoria oficial (PDF institucional)",
+    "ley": "Ley de Adquisiciones, Arrendamientos y Servicios del Sector Público Estatal y Municipal (Puebla)",
+    "ordenGobierno": "GE",
+    "urlDocumentoOficial": "https://licitaciones.puebla.gob.mx/images/2026/junio/GEP-SPFA-LPN-159-371-2026_ADQUISICIN_DE_MATERIAL_GENTICO_PECUARIO.pdf",
+    "urlPortal": "https://licitaciones.puebla.gob.mx/index.php/aquisiciones-bienes-y-servicios/convocatorias-aquisiciones-bienes-y-servicios",
+    "fuente": "Gobierno de Puebla · Bases oficiales (PDF)",
     "documentos": [
       {
         "tipo": "convocatoria",
-        "label": "Descargar convocatoria oficial (PDF)",
-        "url": "https://www.ine.mx/wp-content/uploads/2026/06/INE-LPN-OP-002-2026-CONV.pdf",
+        "label": "Descargar bases / convocatoria (PDF)",
+        "url": "https://licitaciones.puebla.gob.mx/images/2026/junio/GEP-SPFA-LPN-159-371-2026_ADQUISICIN_DE_MATERIAL_GENTICO_PECUARIO.pdf",
+        "formato": "pdf"
+      }
+    ]
+  },
+  {
+    "id": "cdmx-utiles-escolares",
+    "codigo": "LPN-COYOACAN-UTILES-2026",
+    "referencia": "LPN-COYOACAN-UTILES-2026",
+    "titulo": "Adquisición de paquetes de útiles escolares (preescolar, primaria y secundaria)",
+    "institucion": "Alcaldía Coyoacán, Ciudad de México",
+    "uc": "Alcaldía Coyoacán",
+    "categoria": "adquisiciones",
+    "rubro": "materiales",
+    "tipoProcedimiento": "Licitación pública",
+    "tipoContratacion": "ADQUISICIONES",
+    "caracter": "Nacional",
+    "entidad": "Ciudad de México",
+    "fechaPublicacion": "2026-07-08",
+    "fechaApertura": "2026-07-15",
+    "ley": "Ley de Adquisiciones para el Distrito Federal",
+    "ordenGobierno": "GE",
+    "urlDocumentoOficial": "https://concursodigital.finanzas.cdmx.gob.mx/storage/oportunidades/BaseAnexo_6989/base_licitacion.pdf",
+    "urlPortal": "https://concursodigital.finanzas.cdmx.gob.mx/proveedores/detalle_convocatoria/NjE0MA==",
+    "fuente": "Concurso Digital CDMX · Bases oficiales (PDF)",
+    "documentos": [
+      {
+        "tipo": "convocatoria",
+        "label": "Descargar bases / convocatoria (PDF)",
+        "url": "https://concursodigital.finanzas.cdmx.gob.mx/storage/oportunidades/BaseAnexo_6989/base_licitacion.pdf",
         "formato": "pdf"
       },
       {
         "tipo": "anexo",
-        "label": "Liga electrónica / anexos",
-        "url": "https://www.ine.mx/wp-content/uploads/2026/06/INE-LPN-OP-002-2026-LIGA.pdf",
+        "label": "Anexo técnico (PDF)",
+        "url": "https://concursodigital.finanzas.cdmx.gob.mx/storage/oportunidades/BaseAnexo_6989/anexo_tecnico.pdf",
+        "formato": "pdf"
+      }
+    ]
+  },
+  {
+    "id": "gep-spfa-lpn-160-328-2026",
+    "codigo": "GEP-SPFA-LPN-160-328/2026",
+    "referencia": "GEP-SPFA-LPN-160-328/2026",
+    "titulo": "Adquisición de molinos para el Programa mujer rural emprendedora",
+    "institucion": "Secretaría de Agricultura y Desarrollo Rural · Gobierno del Estado de Puebla",
+    "uc": "Secretaría de Agricultura y Desarrollo Rural",
+    "categoria": "adquisiciones",
+    "rubro": "agro",
+    "tipoProcedimiento": "Licitación pública nacional",
+    "tipoContratacion": "ADQUISICIONES",
+    "caracter": "Nacional",
+    "entidad": "Puebla",
+    "fechaPublicacion": "2026-07-03",
+    "fechaApertura": "2026-07-16",
+    "ley": "Ley de Adquisiciones, Arrendamientos y Servicios del Sector Público Estatal y Municipal (Puebla)",
+    "ordenGobierno": "GE",
+    "urlDocumentoOficial": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-160-328-2026_ADQ_MOLINOS_MUJER_RURAL_2V.pdf",
+    "urlPortal": "https://licitaciones.puebla.gob.mx/index.php/aquisiciones-bienes-y-servicios/convocatorias-aquisiciones-bienes-y-servicios",
+    "fuente": "Gobierno de Puebla · Bases oficiales (PDF)",
+    "documentos": [
+      {
+        "tipo": "convocatoria",
+        "label": "Descargar bases / convocatoria (PDF)",
+        "url": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-160-328-2026_ADQ_MOLINOS_MUJER_RURAL_2V.pdf",
+        "formato": "pdf"
+      }
+    ]
+  },
+  {
+    "id": "cdmx-material-conexiones",
+    "codigo": "LPN-SEGIAGUA-CONEXIONES-2026",
+    "referencia": "LPN-SEGIAGUA-CONEXIONES-2026",
+    "titulo": "Adquisición de material para conexiones",
+    "institucion": "Sistema de Aguas de la Ciudad de México (SACMEX)",
+    "uc": "SACMEX",
+    "categoria": "adquisiciones",
+    "rubro": "infraestructura",
+    "tipoProcedimiento": "Licitación pública",
+    "tipoContratacion": "ADQUISICIONES",
+    "caracter": "Nacional",
+    "entidad": "Ciudad de México",
+    "fechaPublicacion": "2026-07-08",
+    "fechaApertura": "2026-07-16",
+    "ley": "Ley de Adquisiciones para el Distrito Federal",
+    "ordenGobierno": "GE",
+    "urlDocumentoOficial": "https://concursodigital.finanzas.cdmx.gob.mx/storage/oportunidades/BaseAnexo_6987/base_licitacion.pdf",
+    "urlPortal": "https://concursodigital.finanzas.cdmx.gob.mx/proveedores/detalle_convocatoria/NjE0MQ==",
+    "fuente": "Concurso Digital CDMX · Bases oficiales (PDF)",
+    "documentos": [
+      {
+        "tipo": "convocatoria",
+        "label": "Descargar bases / convocatoria (PDF)",
+        "url": "https://concursodigital.finanzas.cdmx.gob.mx/storage/oportunidades/BaseAnexo_6987/base_licitacion.pdf",
         "formato": "pdf"
       },
       {
-        "tipo": "portal",
-        "label": "Portal de licitaciones INE",
-        "url": "https://www.ine.mx/licitaciones-contrataciones-presenciales/",
-        "formato": "portal"
+        "tipo": "anexo",
+        "label": "Anexo técnico (PDF)",
+        "url": "https://concursodigital.finanzas.cdmx.gob.mx/storage/oportunidades/BaseAnexo_6987/anexo_tecnico.pdf",
+        "formato": "pdf"
+      }
+    ]
+  },
+  {
+    "id": "gep-spfa-lpn-163-577-2026",
+    "codigo": "GEP-SPFA-LPN-163-577/2026",
+    "referencia": "GEP-SPFA-LPN-163-577/2026",
+    "titulo": "Adquisición de lubricantes y aditivos para obra por administración directa (vialidades / módulos de maquinaria)",
+    "institucion": "Secretaría de Infraestructura · Gobierno del Estado de Puebla",
+    "uc": "Secretaría de Infraestructura",
+    "categoria": "adquisiciones",
+    "rubro": "insumos_industriales",
+    "tipoProcedimiento": "Licitación pública nacional",
+    "tipoContratacion": "ADQUISICIONES",
+    "caracter": "Nacional",
+    "entidad": "Puebla",
+    "fechaPublicacion": "2026-07-03",
+    "fechaApertura": "2026-07-17",
+    "ley": "Ley de Adquisiciones, Arrendamientos y Servicios del Sector Público Estatal y Municipal (Puebla)",
+    "ordenGobierno": "GE",
+    "urlDocumentoOficial": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-163-577-2026_-_ADQUISICIN_DE_LUBRICANTES_Y_ADITIVOS_INFRAESTRUCTURA.pdf",
+    "urlPortal": "https://licitaciones.puebla.gob.mx/index.php/aquisiciones-bienes-y-servicios/convocatorias-aquisiciones-bienes-y-servicios",
+    "fuente": "Gobierno de Puebla · Bases oficiales (PDF)",
+    "documentos": [
+      {
+        "tipo": "convocatoria",
+        "label": "Descargar bases / convocatoria (PDF)",
+        "url": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-163-577-2026_-_ADQUISICIN_DE_LUBRICANTES_Y_ADITIVOS_INFRAESTRUCTURA.pdf",
+        "formato": "pdf"
+      }
+    ]
+  },
+  {
+    "id": "gep-spfa-lpn-162-410-2026",
+    "codigo": "GEP-SPFA-LPN-162-410/2026",
+    "referencia": "GEP-SPFA-LPN-162-410/2026",
+    "titulo": "Adquisición de materiales, accesorios y suministros médicos (vacunación, salud materna, salud bucal y enfermedades respiratorias)",
+    "institucion": "Servicios de Salud del Estado de Puebla",
+    "uc": "Servicios de Salud del Estado de Puebla",
+    "categoria": "adquisiciones",
+    "rubro": "medico",
+    "tipoProcedimiento": "Licitación pública nacional",
+    "tipoContratacion": "ADQUISICIONES",
+    "caracter": "Nacional",
+    "entidad": "Puebla",
+    "fechaPublicacion": "2026-07-03",
+    "fechaApertura": "2026-07-17",
+    "ley": "Ley de Adquisiciones, Arrendamientos y Servicios del Sector Público Estatal y Municipal (Puebla)",
+    "ordenGobierno": "GE",
+    "urlDocumentoOficial": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-162-410-2026_-_ADQ_DE_MATERIALES_MDICOS_-_SERV_DE_SALUD.pdf",
+    "urlPortal": "https://licitaciones.puebla.gob.mx/index.php/aquisiciones-bienes-y-servicios/convocatorias-aquisiciones-bienes-y-servicios",
+    "fuente": "Gobierno de Puebla · Bases oficiales (PDF)",
+    "documentos": [
+      {
+        "tipo": "convocatoria",
+        "label": "Descargar bases / convocatoria (PDF)",
+        "url": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-162-410-2026_-_ADQ_DE_MATERIALES_MDICOS_-_SERV_DE_SALUD.pdf",
+        "formato": "pdf"
+      }
+    ]
+  },
+  {
+    "id": "cdmx-medidores-agua",
+    "codigo": "LPI-SEGIAGUA-005-2026",
+    "referencia": "LPI-SEGIAGUA-005-2026",
+    "titulo": "Adquisición de medidores de agua ultrasónicos de diferentes diámetros",
+    "institucion": "Sistema de Aguas de la Ciudad de México (SACMEX)",
+    "uc": "SACMEX",
+    "categoria": "adquisiciones",
+    "rubro": "infraestructura",
+    "tipoProcedimiento": "Licitación pública",
+    "tipoContratacion": "ADQUISICIONES",
+    "caracter": "Nacional",
+    "entidad": "Ciudad de México",
+    "fechaPublicacion": "2026-07-09",
+    "fechaApertura": "2026-07-17",
+    "ley": "Ley de Adquisiciones para el Distrito Federal",
+    "ordenGobierno": "GE",
+    "urlDocumentoOficial": "https://concursodigital.finanzas.cdmx.gob.mx/storage/oportunidades/BaseAnexo_6988/base_licitacion.pdf",
+    "urlPortal": "https://concursodigital.finanzas.cdmx.gob.mx/proveedores/detalle_convocatoria/NjE0Mg==",
+    "fuente": "Concurso Digital CDMX · Bases oficiales (PDF)",
+    "documentos": [
+      {
+        "tipo": "convocatoria",
+        "label": "Descargar bases / convocatoria (PDF)",
+        "url": "https://concursodigital.finanzas.cdmx.gob.mx/storage/oportunidades/BaseAnexo_6988/base_licitacion.pdf",
+        "formato": "pdf"
+      },
+      {
+        "tipo": "anexo",
+        "label": "Anexo técnico (PDF)",
+        "url": "https://concursodigital.finanzas.cdmx.gob.mx/storage/oportunidades/BaseAnexo_6988/anexo_tecnico.pdf",
+        "formato": "pdf"
+      }
+    ]
+  },
+  {
+    "id": "gep-spfa-lpn-166-399-2026",
+    "codigo": "GEP-SPFA-LPN-166-399/2026",
+    "referencia": "GEP-SPFA-LPN-166-399/2026",
+    "titulo": "Adquisición de equipamiento y tecnologías modernas especializadas para el sector rural",
+    "institucion": "Secretaría de Agricultura y Desarrollo Rural · Gobierno del Estado de Puebla",
+    "uc": "Secretaría de Agricultura y Desarrollo Rural",
+    "categoria": "adquisiciones",
+    "rubro": "tecnologia",
+    "tipoProcedimiento": "Licitación pública nacional",
+    "tipoContratacion": "ADQUISICIONES",
+    "caracter": "Nacional",
+    "entidad": "Puebla",
+    "fechaPublicacion": "2026-07-07",
+    "fechaApertura": "2026-07-20",
+    "ley": "Ley de Adquisiciones, Arrendamientos y Servicios del Sector Público Estatal y Municipal (Puebla)",
+    "ordenGobierno": "GE",
+    "urlDocumentoOficial": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-166-399-2026_-_ADQ_DE_EQUIPAMIENTO_Y_TECNOLOGAS_-_SEC_RURAL.pdf",
+    "urlPortal": "https://licitaciones.puebla.gob.mx/index.php/aquisiciones-bienes-y-servicios/convocatorias-aquisiciones-bienes-y-servicios",
+    "fuente": "Gobierno de Puebla · Bases oficiales (PDF)",
+    "documentos": [
+      {
+        "tipo": "convocatoria",
+        "label": "Descargar bases / convocatoria (PDF)",
+        "url": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-166-399-2026_-_ADQ_DE_EQUIPAMIENTO_Y_TECNOLOGAS_-_SEC_RURAL.pdf",
+        "formato": "pdf"
+      }
+    ]
+  },
+  {
+    "id": "cdmx-curacion-dental",
+    "codigo": "LPN-SALUD-CURACION-DENTAL-2026",
+    "referencia": "LPN-SALUD-CURACION-DENTAL-2026",
+    "titulo": "Adquisición de material de curación dental para unidades médicas de centros penitenciarios",
+    "institucion": "Secretaría de Salud de la Ciudad de México",
+    "uc": "Secretaría de Salud CDMX",
+    "categoria": "adquisiciones",
+    "rubro": "medico",
+    "tipoProcedimiento": "Licitación pública",
+    "tipoContratacion": "ADQUISICIONES",
+    "caracter": "Nacional",
+    "entidad": "Ciudad de México",
+    "fechaPublicacion": "2026-07-10",
+    "fechaApertura": "2026-07-20",
+    "ley": "Ley de Adquisiciones para el Distrito Federal",
+    "ordenGobierno": "GE",
+    "urlDocumentoOficial": "https://concursodigital.finanzas.cdmx.gob.mx/storage/oportunidades/BaseAnexo_6990/base_licitacion.pdf",
+    "urlPortal": "https://concursodigital.finanzas.cdmx.gob.mx/proveedores/detalle_convocatoria/NjE0Mw==",
+    "fuente": "Concurso Digital CDMX · Bases oficiales (PDF)",
+    "documentos": [
+      {
+        "tipo": "convocatoria",
+        "label": "Descargar bases / convocatoria (PDF)",
+        "url": "https://concursodigital.finanzas.cdmx.gob.mx/storage/oportunidades/BaseAnexo_6990/base_licitacion.pdf",
+        "formato": "pdf"
+      },
+      {
+        "tipo": "anexo",
+        "label": "Anexo técnico (PDF)",
+        "url": "https://concursodigital.finanzas.cdmx.gob.mx/storage/oportunidades/BaseAnexo_6990/anexo_tecnico.pdf",
+        "formato": "pdf"
+      }
+    ]
+  },
+  {
+    "id": "gep-spfa-lpn-168-389-2026",
+    "codigo": "GEP-SPFA-LPN-168-389/2026",
+    "referencia": "GEP-SPFA-LPN-168-389/2026",
+    "titulo": "Adquisición de uniformes y calzado escolar",
+    "institucion": "Gobierno del Estado de Puebla",
+    "uc": "Gobierno del Estado de Puebla",
+    "categoria": "adquisiciones",
+    "rubro": "vestuario",
+    "tipoProcedimiento": "Licitación pública nacional",
+    "tipoContratacion": "ADQUISICIONES",
+    "caracter": "Nacional",
+    "entidad": "Puebla",
+    "fechaPublicacion": "2026-07-13",
+    "fechaApertura": "2026-07-23",
+    "ley": "Ley de Adquisiciones, Arrendamientos y Servicios del Sector Público Estatal y Municipal (Puebla)",
+    "ordenGobierno": "GE",
+    "urlDocumentoOficial": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-168-389-2026 ADQUISICION DE UNIFORMES Y CALZADO.pdf",
+    "urlPortal": "https://licitaciones.puebla.gob.mx/index.php/aquisiciones-bienes-y-servicios/convocatorias-aquisiciones-bienes-y-servicios",
+    "fuente": "Gobierno de Puebla · Bases oficiales (PDF)",
+    "documentos": [
+      {
+        "tipo": "convocatoria",
+        "label": "Descargar bases / convocatoria (PDF)",
+        "url": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-168-389-2026 ADQUISICION DE UNIFORMES Y CALZADO.pdf",
+        "formato": "pdf"
+      }
+    ]
+  },
+  {
+    "id": "gep-spfa-lpn-167-118-2026",
+    "codigo": "GEP-SPFA-LPN-167-118/2026",
+    "referencia": "GEP-SPFA-LPN-167-118/2026",
+    "titulo": "Adquisición de vehículos para el Instituto de Educación Digital del Estado de Puebla",
+    "institucion": "Instituto de Educación Digital del Estado de Puebla",
+    "uc": "Instituto de Educación Digital del Estado de Puebla",
+    "categoria": "adquisiciones",
+    "rubro": "tecnologia",
+    "tipoProcedimiento": "Licitación pública nacional",
+    "tipoContratacion": "ADQUISICIONES",
+    "caracter": "Nacional",
+    "entidad": "Puebla",
+    "fechaPublicacion": "2026-07-13",
+    "fechaApertura": "2026-07-24",
+    "ley": "Ley de Adquisiciones, Arrendamientos y Servicios del Sector Público Estatal y Municipal (Puebla)",
+    "ordenGobierno": "GE",
+    "urlDocumentoOficial": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-167-118-2026_-_ADQ_DE_VEHICULOS.pdf",
+    "urlPortal": "https://licitaciones.puebla.gob.mx/index.php/aquisiciones-bienes-y-servicios/convocatorias-aquisiciones-bienes-y-servicios",
+    "fuente": "Gobierno de Puebla · Bases oficiales (PDF)",
+    "documentos": [
+      {
+        "tipo": "convocatoria",
+        "label": "Descargar bases / convocatoria (PDF)",
+        "url": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-167-118-2026_-_ADQ_DE_VEHICULOS.pdf",
+        "formato": "pdf"
+      }
+    ]
+  },
+  {
+    "id": "gep-spfa-lpn-170-688-2026",
+    "codigo": "GEP-SPFA-LPN-170-688/2026",
+    "referencia": "GEP-SPFA-LPN-170-688/2026",
+    "titulo": "Adquisición de mobiliario para unidades médicas de primer, segundo y tercer nivel",
+    "institucion": "Servicios de Salud del Estado de Puebla",
+    "uc": "Servicios de Salud del Estado de Puebla",
+    "categoria": "adquisiciones",
+    "rubro": "medico",
+    "tipoProcedimiento": "Licitación pública nacional",
+    "tipoContratacion": "ADQUISICIONES",
+    "caracter": "Nacional",
+    "entidad": "Puebla",
+    "fechaPublicacion": "2026-07-13",
+    "fechaApertura": "2026-07-27",
+    "ley": "Ley de Adquisiciones, Arrendamientos y Servicios del Sector Público Estatal y Municipal (Puebla)",
+    "ordenGobierno": "GE",
+    "urlDocumentoOficial": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-170-688-2026 - ADQUISICIÓN DE MOBILIARIO.pdf",
+    "urlPortal": "https://licitaciones.puebla.gob.mx/index.php/aquisiciones-bienes-y-servicios/convocatorias-aquisiciones-bienes-y-servicios",
+    "fuente": "Gobierno de Puebla · Bases oficiales (PDF)",
+    "documentos": [
+      {
+        "tipo": "convocatoria",
+        "label": "Descargar bases / convocatoria (PDF)",
+        "url": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-170-688-2026 - ADQUISICIÓN DE MOBILIARIO.pdf",
+        "formato": "pdf"
+      }
+    ]
+  },
+  {
+    "id": "gep-spfa-lpn-169-680-2026",
+    "codigo": "GEP-SPFA-LPN-169-680/2026",
+    "referencia": "GEP-SPFA-LPN-169-680/2026",
+    "titulo": "Adquisición de fertilizantes, pesticidas y otros insumos",
+    "institucion": "Servicios de Salud / Agricultura Puebla",
+    "uc": "Servicios de Salud / Agricultura Puebla",
+    "categoria": "adquisiciones",
+    "rubro": "insumos_industriales",
+    "tipoProcedimiento": "Licitación pública nacional",
+    "tipoContratacion": "ADQUISICIONES",
+    "caracter": "Nacional",
+    "entidad": "Puebla",
+    "fechaPublicacion": "2026-07-13",
+    "fechaApertura": "2026-07-27",
+    "ley": "Ley de Adquisiciones, Arrendamientos y Servicios del Sector Público Estatal y Municipal (Puebla)",
+    "ordenGobierno": "GE",
+    "urlDocumentoOficial": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-169-680-2026 - FERTILIZANTES SALUD.pdf",
+    "urlPortal": "https://licitaciones.puebla.gob.mx/index.php/aquisiciones-bienes-y-servicios/convocatorias-aquisiciones-bienes-y-servicios",
+    "fuente": "Gobierno de Puebla · Bases oficiales (PDF)",
+    "documentos": [
+      {
+        "tipo": "convocatoria",
+        "label": "Descargar bases / convocatoria (PDF)",
+        "url": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-169-680-2026 - FERTILIZANTES SALUD.pdf",
+        "formato": "pdf"
+      }
+    ]
+  },
+  {
+    "id": "gep-spfa-lpn-172-564-2026",
+    "codigo": "GEP-SPFA-LPN-172-564/2026",
+    "referencia": "GEP-SPFA-LPN-172-564/2026",
+    "titulo": "Adquisición de productos químicos básicos",
+    "institucion": "Gobierno del Estado de Puebla",
+    "uc": "Gobierno del Estado de Puebla",
+    "categoria": "adquisiciones",
+    "rubro": "insumos_industriales",
+    "tipoProcedimiento": "Licitación pública nacional",
+    "tipoContratacion": "ADQUISICIONES",
+    "caracter": "Nacional",
+    "entidad": "Puebla",
+    "fechaPublicacion": "2026-07-14",
+    "fechaApertura": "2026-07-28",
+    "ley": "Ley de Adquisiciones, Arrendamientos y Servicios del Sector Público Estatal y Municipal (Puebla)",
+    "ordenGobierno": "GE",
+    "urlDocumentoOficial": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-172-564-2026 - Adquisición de productos químicos básicos.pdf",
+    "urlPortal": "https://licitaciones.puebla.gob.mx/index.php/aquisiciones-bienes-y-servicios/convocatorias-aquisiciones-bienes-y-servicios",
+    "fuente": "Gobierno de Puebla · Bases oficiales (PDF)",
+    "documentos": [
+      {
+        "tipo": "convocatoria",
+        "label": "Descargar bases / convocatoria (PDF)",
+        "url": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-172-564-2026 - Adquisición de productos químicos básicos.pdf",
+        "formato": "pdf"
+      }
+    ]
+  },
+  {
+    "id": "gep-spfa-lpn-171-577-2026",
+    "codigo": "GEP-SPFA-LPN-171-577/2026",
+    "referencia": "GEP-SPFA-LPN-171-577/2026",
+    "titulo": "Adquisición de lubricantes y aditivos para infraestructura",
+    "institucion": "Secretaría de Infraestructura · Gobierno del Estado de Puebla",
+    "uc": "Secretaría de Infraestructura",
+    "categoria": "adquisiciones",
+    "rubro": "insumos_industriales",
+    "tipoProcedimiento": "Licitación pública nacional",
+    "tipoContratacion": "ADQUISICIONES",
+    "caracter": "Nacional",
+    "entidad": "Puebla",
+    "fechaPublicacion": "2026-07-14",
+    "fechaApertura": "2026-07-28",
+    "ley": "Ley de Adquisiciones, Arrendamientos y Servicios del Sector Público Estatal y Municipal (Puebla)",
+    "ordenGobierno": "GE",
+    "urlDocumentoOficial": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-171-577-2026 - ADQUISICIÓN DE LUBRICANTES Y ADITIVOS. INFRAESTRUCTURA.pdf",
+    "urlPortal": "https://licitaciones.puebla.gob.mx/index.php/aquisiciones-bienes-y-servicios/convocatorias-aquisiciones-bienes-y-servicios",
+    "fuente": "Gobierno de Puebla · Bases oficiales (PDF)",
+    "documentos": [
+      {
+        "tipo": "convocatoria",
+        "label": "Descargar bases / convocatoria (PDF)",
+        "url": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-171-577-2026 - ADQUISICIÓN DE LUBRICANTES Y ADITIVOS. INFRAESTRUCTURA.pdf",
+        "formato": "pdf"
+      }
+    ]
+  },
+  {
+    "id": "gep-spfa-lpn-174-560-2026",
+    "codigo": "GEP-SPFA-LPN-174-560/2026",
+    "referencia": "GEP-SPFA-LPN-174-560/2026",
+    "titulo": "Adquisición de productos químicos básicos (pruebas rápidas) para IMSS-Bienestar",
+    "institucion": "IMSS-Bienestar / Servicios de Salud Puebla",
+    "uc": "IMSS-Bienestar / Servicios de Salud Puebla",
+    "categoria": "adquisiciones",
+    "rubro": "medico",
+    "tipoProcedimiento": "Licitación pública nacional",
+    "tipoContratacion": "ADQUISICIONES",
+    "caracter": "Nacional",
+    "entidad": "Puebla",
+    "fechaPublicacion": "2026-07-14",
+    "fechaApertura": "2026-07-29",
+    "ley": "Ley de Adquisiciones, Arrendamientos y Servicios del Sector Público Estatal y Municipal (Puebla)",
+    "ordenGobierno": "GE",
+    "urlDocumentoOficial": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-174-560-2026_PRUEBAS_RAPIDAS_IMSS-BIENESTAR.pdf",
+    "urlPortal": "https://licitaciones.puebla.gob.mx/index.php/aquisiciones-bienes-y-servicios/convocatorias-aquisiciones-bienes-y-servicios",
+    "fuente": "Gobierno de Puebla · Bases oficiales (PDF)",
+    "documentos": [
+      {
+        "tipo": "convocatoria",
+        "label": "Descargar bases / convocatoria (PDF)",
+        "url": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-174-560-2026_PRUEBAS_RAPIDAS_IMSS-BIENESTAR.pdf",
+        "formato": "pdf"
+      }
+    ]
+  },
+  {
+    "id": "gep-spfa-lpn-173-559-2026",
+    "codigo": "GEP-SPFA-LPN-173-559/2026",
+    "referencia": "GEP-SPFA-LPN-173-559/2026",
+    "titulo": "Adquisición de materiales, accesorios y suministros de laboratorio (auxiliares de diagnóstico)",
+    "institucion": "Servicios de Salud del Estado de Puebla",
+    "uc": "Servicios de Salud del Estado de Puebla",
+    "categoria": "adquisiciones",
+    "rubro": "medico",
+    "tipoProcedimiento": "Licitación pública nacional",
+    "tipoContratacion": "ADQUISICIONES",
+    "caracter": "Nacional",
+    "entidad": "Puebla",
+    "fechaPublicacion": "2026-07-14",
+    "fechaApertura": "2026-07-29",
+    "ley": "Ley de Adquisiciones, Arrendamientos y Servicios del Sector Público Estatal y Municipal (Puebla)",
+    "ordenGobierno": "GE",
+    "urlDocumentoOficial": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-173-559-2026 - ADQUISICIÓN DE MATERIALES, ACCESORIOS Y SUMINISTROS.pdf",
+    "urlPortal": "https://licitaciones.puebla.gob.mx/index.php/aquisiciones-bienes-y-servicios/convocatorias-aquisiciones-bienes-y-servicios",
+    "fuente": "Gobierno de Puebla · Bases oficiales (PDF)",
+    "documentos": [
+      {
+        "tipo": "convocatoria",
+        "label": "Descargar bases / convocatoria (PDF)",
+        "url": "https://licitaciones.puebla.gob.mx/images/2026/JULIO/GEP-SPFA-LPN-173-559-2026 - ADQUISICIÓN DE MATERIALES, ACCESORIOS Y SUMINISTROS.pdf",
+        "formato": "pdf"
+      }
+    ]
+  },
+  {
+    "id": "cdmx-uniformes-fgj",
+    "codigo": "LPN-FGJ-UNIFORMES-2026",
+    "referencia": "LPN-FGJ-UNIFORMES-2026",
+    "titulo": "Adquisición de bota, camisola, chamarras, pantalón, playeras, cinturón y gorra",
+    "institucion": "Fiscalía General de Justicia de la Ciudad de México",
+    "uc": "FGJ CDMX",
+    "categoria": "adquisiciones",
+    "rubro": "vestuario",
+    "tipoProcedimiento": "Licitación pública",
+    "tipoContratacion": "ADQUISICIONES",
+    "caracter": "Nacional",
+    "entidad": "Ciudad de México",
+    "fechaPublicacion": "2026-07-13",
+    "fechaApertura": "2026-07-31",
+    "ley": "Ley de Adquisiciones para el Distrito Federal",
+    "ordenGobierno": "GE",
+    "urlDocumentoOficial": "https://concursodigital.finanzas.cdmx.gob.mx/storage/oportunidades/BaseAnexo_6995/base_licitacion.pdf",
+    "urlPortal": "https://concursodigital.finanzas.cdmx.gob.mx/proveedores/detalle_convocatoria/NjE0OQ==",
+    "fuente": "Concurso Digital CDMX · Bases oficiales (PDF)",
+    "documentos": [
+      {
+        "tipo": "convocatoria",
+        "label": "Descargar bases / convocatoria (PDF)",
+        "url": "https://concursodigital.finanzas.cdmx.gob.mx/storage/oportunidades/BaseAnexo_6995/base_licitacion.pdf",
+        "formato": "pdf"
+      },
+      {
+        "tipo": "anexo",
+        "label": "Anexo técnico (PDF)",
+        "url": "https://concursodigital.finanzas.cdmx.gob.mx/storage/oportunidades/BaseAnexo_6995/anexo_tecnico.pdf",
+        "formato": "pdf"
+      }
+    ]
+  },
+  {
+    "id": "sss-lpn-013-2026",
+    "codigo": "SSS-LPN-013-2026",
+    "referencia": "SSS-LPN-013-2026",
+    "titulo": "Adquisición de herramientas menores y refacciones/accesorios menores de equipo e instrumental médico y de laboratorio",
+    "institucion": "Servicios de Salud de Sinaloa",
+    "uc": "Servicios de Salud de Sinaloa",
+    "categoria": "adquisiciones",
+    "rubro": "medico",
+    "tipoProcedimiento": "Licitación pública nacional presencial",
+    "tipoContratacion": "ADQUISICIONES",
+    "caracter": "Nacional",
+    "entidad": "Sinaloa",
+    "fechaPublicacion": "2026-07-01",
+    "fechaApertura": "2026-08-15",
+    "ley": "Ley de Adquisiciones del Estado de Sinaloa",
+    "ordenGobierno": "GE",
+    "urlDocumentoOficial": "https://compranet.sinaloa.gob.mx/uploads/files/c699cec33fe0fd4d005fa74e64b77a4f.doc",
+    "urlPortal": "https://compranet.sinaloa.gob.mx/servicios-de-salud-de-sinaloa-sss-adquisiciones",
+    "fuente": "CompraNet Sinaloa · Convocatoria oficial (aún sin acta de apertura)",
+    "documentos": [
+      {
+        "tipo": "convocatoria",
+        "label": "Descargar convocatoria / bases oficiales",
+        "url": "https://compranet.sinaloa.gob.mx/uploads/files/c699cec33fe0fd4d005fa74e64b77a4f.doc",
+        "formato": "doc"
+      },
+      {
+        "tipo": "anexo",
+        "label": "Bases y anexos (ZIP)",
+        "url": "https://compranet.sinaloa.gob.mx/uploads/files/c5370e1effdd729edbf50bad3886c08e.zip",
+        "formato": "zip"
+      }
+    ]
+  },
+  {
+    "id": "sss-lpn-014-2026",
+    "codigo": "SSS-LPN-014-2026",
+    "referencia": "SSS-LPN-014-2026",
+    "titulo": "Adquisición de equipo e instrumental médico y de laboratorio",
+    "institucion": "Servicios de Salud de Sinaloa",
+    "uc": "Servicios de Salud de Sinaloa",
+    "categoria": "adquisiciones",
+    "rubro": "medico",
+    "tipoProcedimiento": "Licitación pública nacional presencial",
+    "tipoContratacion": "ADQUISICIONES",
+    "caracter": "Nacional",
+    "entidad": "Sinaloa",
+    "fechaPublicacion": "2026-07-01",
+    "fechaApertura": "2026-08-15",
+    "ley": "Ley de Adquisiciones del Estado de Sinaloa",
+    "ordenGobierno": "GE",
+    "urlDocumentoOficial": "https://compranet.sinaloa.gob.mx/uploads/files/4efb07dde4e31042807d6901b71fb94c.zip",
+    "urlPortal": "https://compranet.sinaloa.gob.mx/servicios-de-salud-de-sinaloa-sss-adquisiciones",
+    "fuente": "CompraNet Sinaloa · Convocatoria oficial (aún sin acta de apertura)",
+    "documentos": [
+      {
+        "tipo": "convocatoria",
+        "label": "Descargar convocatoria / bases oficiales",
+        "url": "https://compranet.sinaloa.gob.mx/uploads/files/4efb07dde4e31042807d6901b71fb94c.zip",
+        "formato": "zip"
+      }
+    ]
+  },
+  {
+    "id": "sss-lpn-015-2026",
+    "codigo": "SSS-LPN-015-2026",
+    "referencia": "SSS-LPN-015-2026",
+    "titulo": "Adquisición de medicamento y material de curación",
+    "institucion": "Servicios de Salud de Sinaloa",
+    "uc": "Servicios de Salud de Sinaloa",
+    "categoria": "adquisiciones",
+    "rubro": "medico",
+    "tipoProcedimiento": "Licitación pública nacional presencial",
+    "tipoContratacion": "ADQUISICIONES",
+    "caracter": "Nacional",
+    "entidad": "Sinaloa",
+    "fechaPublicacion": "2026-07-01",
+    "fechaApertura": "2026-08-15",
+    "ley": "Ley de Adquisiciones del Estado de Sinaloa",
+    "ordenGobierno": "GE",
+    "urlDocumentoOficial": "https://compranet.sinaloa.gob.mx/uploads/files/7545dde4b3186eb82555ff8ae454bbb5.zip",
+    "urlPortal": "https://compranet.sinaloa.gob.mx/servicios-de-salud-de-sinaloa-sss-adquisiciones",
+    "fuente": "CompraNet Sinaloa · Convocatoria oficial (aún sin acta de apertura)",
+    "documentos": [
+      {
+        "tipo": "convocatoria",
+        "label": "Descargar convocatoria / bases oficiales",
+        "url": "https://compranet.sinaloa.gob.mx/uploads/files/7545dde4b3186eb82555ff8ae454bbb5.zip",
+        "formato": "zip"
       }
     ]
   }
