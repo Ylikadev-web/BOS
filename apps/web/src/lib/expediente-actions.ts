@@ -651,10 +651,26 @@ export function applyExpedienteAction(
         return { expediente: next, message: "Sin documento" };
       }
       const nodeTipo =
-        /factura|cfdi/i.test(doc.clasificacion) ? "factura"
-        : /orden|compra/i.test(doc.clasificacion) ? "compra"
-        : /cotiz/i.test(doc.clasificacion) ? "cotizacion"
-        : "factura";
+        doc.intencion === "cobro" || /cobr/i.test(doc.clasificacion)
+          ? "cobro"
+          : doc.intencion === "pago"
+            ? "pago"
+            : doc.intencion === "orden_compra" ||
+                /orden|compra/i.test(doc.clasificacion)
+              ? "compra"
+              : doc.intencion === "cotizacion_proveedor" ||
+                  doc.intencion === "cotizacion_venta" ||
+                  doc.intencion === "anexo_economico" ||
+                  doc.intencion === "lista_productos" ||
+                  /cotiz|anexo|lista/i.test(doc.clasificacion)
+                ? "cotizacion"
+                : doc.intencion === "contrato" || /contrato/i.test(doc.clasificacion)
+                  ? "contrato"
+                  : /factura|cfdi/i.test(doc.clasificacion) ||
+                      doc.intencion === "factura_cliente" ||
+                      doc.intencion === "factura_proveedor"
+                    ? "factura"
+                    : "factura";
       const nodeId = uid("n-doc");
       next = {
         ...next,

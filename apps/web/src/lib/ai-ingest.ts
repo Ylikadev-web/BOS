@@ -5,6 +5,7 @@ import type {
 import {
   DOCUMENT_ANALYSIS_JSON_SCHEMA,
   DOCUMENT_ANALYSIS_MODEL,
+  DOCUMENT_ANALYSIS_MODEL_FAST,
   buildDocumentAnalysisPrompt,
   guessMimeType,
   heuristicAnalyze,
@@ -29,6 +30,13 @@ const ALLOWED_EXT = [
 ];
 
 const GEMINI_KEY_STORAGE = "ylika-gemini-api-key";
+
+export class GeminiRequiredError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "GeminiRequiredError";
+  }
+}
 
 export function isAllowedDocument(file: File) {
   const name = file.name.toLowerCase();
@@ -99,6 +107,8 @@ async function analyzeViaApi(
     if (!res.ok) return null;
     const data = (await res.json()) as DocumentoAiResultado;
     if (!data?.clasificacion) return null;
+    // Si la API cayó a heurística, no la tratamos como éxito Gemini
+    if (data.provider === "heuristic") return null;
     return { ...data, provider: data.provider ?? "api" };
   } catch {
     return null;
@@ -119,16 +129,15 @@ async function analyzeViaGemini(
   if (multimodal) {
     parts.push({
       inline_data: {
-        mime_type: mime,
+        mime_type: mime.startsWith("image/") || mime === "application/pdf"
+          ? mime
+          : "application/pdf",
         data: await fileToBase64(file),
       },
     });
   } else if (textHint) {
-    parts[0] = {
-      text: `${prompt}\n\n---\n${textHint}\n---`,
-    };
+    parts[0] = { text: `${prompt}\n\n---\n${textHint}\n---` };
   } else {
-    // Excel/binarios sin texto: envía igual como octet-stream (Gemini puede fallar → caller hace fallback)
     parts.push({
       inline_data: {
         mime_type: mime || "application/octet-stream",
@@ -139,8 +148,8 @@ async function analyzeViaGemini(
 
   const models = [
     DOCUMENT_ANALYSIS_MODEL,
+    DOCUMENT_ANALYSIS_MODEL_FAST,
     "gemini-2.0-flash",
-    "gemini-1.5-flash",
   ];
 
   let lastError: Error | null = null;
@@ -156,7 +165,7 @@ async function analyzeViaGemini(
             generationConfig: {
               responseMimeType: "application/json",
               responseSchema: DOCUMENT_ANALYSIS_JSON_SCHEMA,
-              temperature: 0.2,
+              temperature: 0.1,
             },
           }),
         },
@@ -164,7 +173,9 @@ async function analyzeViaGemini(
 
       if (!res.ok) {
         const errText = await res.text();
-        lastError = new Error(`${model}: ${res.status} ${errText.slice(0, 200)}`);
+        lastError = new Error(
+          `${model}: ${res.status} ${errText.slice(0, 280)}`,
+        );
         continue;
       }
 
@@ -199,39 +210,45 @@ async function analyzeViaGemini(
 }
 
 /**
- * Pipeline de análisis documental:
- * 1) API Nest (si NEXT_PUBLIC_API_URL)
- * 2) Gemini directo (API key en settings / env)
- * 3) Heurística local + parser CFDI
+ * Pipeline:
+ * 1) API Nest con Gemini
+ * 2) Gemini directo (API key)
+ * 3) Solo CFDI XML local / heurística explícita (PDFs multimodales EXIGEN Gemini)
  */
 export async function analyzeDocument(
   file: File,
   expedientes: ExpedienteMatchHint[] = [],
 ): Promise<DocumentoAiResultado> {
   const textHint = await readTextHint(file);
+  const multimodal = isMultimodalDocument(
+    file.type || guessMimeType(file.name),
+    file.name,
+  );
 
   const fromApi = await analyzeViaApi(file, expedientes);
-  if (fromApi) return fromApi;
+  if (fromApi?.provider === "gemini" || fromApi?.provider === "api") {
+    return fromApi;
+  }
 
   const geminiKey = getGeminiApiKey();
   if (geminiKey) {
-    try {
-      return await analyzeViaGemini(file, expedientes, geminiKey, textHint);
-    } catch {
-      const local = heuristicAnalyze({
-        archivo: file.name,
-        text: textHint,
-        size: file.size,
-        expedientes,
-      });
-      return {
-        ...local,
-        riesgos: [
-          ...(local.riesgos ?? []),
-          "Gemini falló; se usó análisis local",
-        ],
-      };
-    }
+    return analyzeViaGemini(file, expedientes, geminiKey, textHint);
+  }
+
+  // CFDI XML sí se puede parsear localmente con calidad
+  if (textHint && /<cfdi:Comprobante|<Comprobante/i.test(textHint)) {
+    return heuristicAnalyze({
+      archivo: file.name,
+      text: textHint,
+      size: file.size,
+      expedientes,
+    });
+  }
+
+  if (multimodal) {
+    throw new GeminiRequiredError(
+      "Este PDF/imagen necesita Gemini. Abre API key, pega tu clave de Google AI Studio y vuelve a analizar.",
+    );
   }
 
   return heuristicAnalyze({

@@ -12,27 +12,60 @@ export type DocumentoAiProvider =
   | "local"
   | "heuristic";
 
+/** Qué debe hacer YLIKA con el documento en el expediente */
+export type IntencionOperativa =
+  | "cotizacion_venta"
+  | "cotizacion_proveedor"
+  | "orden_compra"
+  | "pedido_venta"
+  | "factura_cliente"
+  | "factura_proveedor"
+  | "cobro"
+  | "pago"
+  | "contrato"
+  | "remision"
+  | "lista_productos"
+  | "anexo_economico"
+  | "licitacion"
+  | "correo_seguimiento"
+  | "otro";
+
 export interface DocumentoAiResultado {
   archivo: string;
   clasificacion: string;
+  /** Intención operativa para el BOS */
+  intencion?: IntencionOperativa;
+  /** Gobierno o privado detectado en el documento */
+  sector?: "gobierno" | "privado";
+  /** Modalidad sugerida para el expediente */
+  modalidad?: "venta_directa" | "proyecto" | "servicio";
+  /** Rol de YLIKA respecto al documento */
+  rolYlika?: "vendedor" | "comprador" | "interno" | "indefinido";
   proveedor?: string;
   cliente?: string;
   monto?: number;
   concepto?: string;
   proyecto?: string;
-  /** Resumen ejecutivo generado por IA */
+  /** Resumen ejecutivo */
   resumen?: string;
+  /** Cadena de razonamiento: por qué clasificó así y qué hacer */
+  razonamiento?: string;
+  /** Siguiente paso concreto recomendado al usuario */
+  siguientePaso?: string;
   fecha?: string;
   moneda?: string;
   rfcEmisor?: string;
   rfcReceptor?: string;
-  /** Señales de riesgo / inconsistencias */
   riesgos?: string[];
-  /** Personas, empresas, códigos detectados */
   entidadesDetectadas?: string[];
-  /** 0–1 confianza de la extracción */
+  /** Partidas / productos detectados */
+  partidas?: Array<{
+    descripcion: string;
+    cantidad?: number;
+    precio?: number;
+    total?: number;
+  }>;
   confianzaExtraccion?: number;
-  /** Motor que produjo el análisis */
   provider?: DocumentoAiProvider;
   model?: string;
   expedienteSugerido?: {
@@ -44,7 +77,9 @@ export interface DocumentoAiResultado {
   campos: Record<string, string | number>;
 }
 
-export const DOCUMENT_ANALYSIS_MODEL = "gemini-2.5-flash";
+/** Pro para anexos/PDF densos; Flash como fallback rápido */
+export const DOCUMENT_ANALYSIS_MODEL = "gemini-2.5-pro";
+export const DOCUMENT_ANALYSIS_MODEL_FAST = "gemini-2.5-flash";
 
 export const DOCUMENT_ANALYSIS_JSON_SCHEMA = {
   type: "object",
@@ -52,11 +87,38 @@ export const DOCUMENT_ANALYSIS_JSON_SCHEMA = {
     clasificacion: {
       type: "string",
       description:
-        "Tipo documental: Factura/CFDI, Cotización, Orden de compra, Contrato, Remisión, Correo, Otro",
+        "Etiqueta humana precisa. Ej: Anexo económico de licitación, Cotización proveedor, CFDI ingreso, Lista de partidas, etc.",
+    },
+    intencion: {
+      type: "string",
+      description:
+        "Una de: cotizacion_venta, cotizacion_proveedor, orden_compra, pedido_venta, factura_cliente, factura_proveedor, cobro, pago, contrato, remision, lista_productos, anexo_economico, licitacion, correo_seguimiento, otro",
+    },
+    sector: {
+      type: "string",
+      description: "gobierno o privado",
+    },
+    modalidad: {
+      type: "string",
+      description: "venta_directa, proyecto o servicio",
+    },
+    rolYlika: {
+      type: "string",
+      description: "vendedor, comprador, interno o indefinido",
     },
     resumen: {
       type: "string",
-      description: "Resumen ejecutivo en 2-4 oraciones en español",
+      description: "2-4 oraciones en español, accionables",
+    },
+    razonamiento: {
+      type: "string",
+      description:
+        "Explica con detalle: señales del documento, por qué sector, por qué intención, qué campos usaste. Mínimo 4 oraciones.",
+    },
+    siguientePaso: {
+      type: "string",
+      description:
+        "Instrucción concreta: crear expediente gobierno, registrar cobro, asociar como OC, etc.",
     },
     proveedor: { type: "string" },
     cliente: { type: "string" },
@@ -64,29 +126,37 @@ export const DOCUMENT_ANALYSIS_JSON_SCHEMA = {
     moneda: { type: "string" },
     concepto: { type: "string" },
     proyecto: { type: "string" },
-    fecha: { type: "string", description: "YYYY-MM-DD si es posible" },
+    fecha: { type: "string" },
     rfcEmisor: { type: "string" },
     rfcReceptor: { type: "string" },
-    riesgos: {
+    riesgos: { type: "array", items: { type: "string" } },
+    entidadesDetectadas: { type: "array", items: { type: "string" } },
+    partidas: {
       type: "array",
-      items: { type: "string" },
-      description: "Riesgos, faltantes o inconsistencias",
+      items: {
+        type: "object",
+        properties: {
+          descripcion: { type: "string" },
+          cantidad: { type: "number" },
+          precio: { type: "number" },
+          total: { type: "number" },
+        },
+        required: ["descripcion"],
+      },
     },
-    entidadesDetectadas: {
-      type: "array",
-      items: { type: "string" },
-    },
-    confianzaExtraccion: {
-      type: "number",
-      description: "0 a 1",
-    },
-    expedienteCodigoSugerido: {
-      type: "string",
-      description: "Código EXP-xxxxxx del catálogo si hay match, o vacío",
-    },
+    confianzaExtraccion: { type: "number" },
+    expedienteCodigoSugerido: { type: "string" },
     confianzaMatch: { type: "number" },
   },
-  required: ["clasificacion", "resumen", "confianzaExtraccion"],
+  required: [
+    "clasificacion",
+    "intencion",
+    "sector",
+    "resumen",
+    "razonamiento",
+    "siguientePaso",
+    "confianzaExtraccion",
+  ],
 } as const;
 
 export function buildDocumentAnalysisPrompt(
@@ -96,7 +166,7 @@ export function buildDocumentAnalysisPrompt(
 ) {
   const catalog =
     expedientes.length === 0
-      ? "(sin catálogo)"
+      ? "(sin catálogo de expedientes)"
       : expedientes
           .map(
             (e) =>
@@ -104,23 +174,47 @@ export function buildDocumentAnalysisPrompt(
           )
           .join("\n");
 
-  return `Eres el motor documental de YLIKA, un Business Operating System mexicano.
-Analiza el documento comercial/operativo adjunto y extrae información accionable para un expediente de negocio.
+  return `Eres el analista documental senior de YLIKA (Business Operating System, México).
+Tu trabajo NO es etiquetar a la ligera: debes PENSAR EN EXTREMO sobre qué es el documento, para qué sirve en una operación comercial/gubernamental, y qué acción debe tomar el sistema.
 
 Archivo: ${filename}
 
-Catálogo de expedientes activos (elige el mejor match o deja vacío):
+Catálogo de expedientes activos (match solo si hay evidencia clara):
 ${catalog}
 
-Reglas:
-- Responde SOLO JSON válido según el schema.
-- Montos en número (sin símbolos). Preferir MXN.
-- Si es CFDI/XML, prioriza Emisor/Receptor, Total, UUID, conceptos.
-- Señala riesgos: sin RFC, montos incompletos, sin fecha, posible duplicado, CFDI cancelable, etc.
-- El resumen debe ser útil para un ejecutivo comercial (qué es, de quién, para qué, monto).
-- Si no estás seguro de un campo, omítelo o usa confianzaExtraccion baja.
+## Cómo pensar (obligatorio)
+1. Lee TODO el contenido visible (membretes, oficios, anexos, tablas, firmas, sellos, RFCs, dependencias, partidas).
+2. Identifica el GÉNERO real del documento. Ejemplos:
+   - Anexo económico / cotización económica de licitación o concurso
+   - Cotización de venta al cliente
+   - Cotización de proveedor hacia YLIKA
+   - Orden de compra, pedido, remisión
+   - Factura/CFDI (ingreso o egreso)
+   - Comprobante de cobro o pago (SPEI, ficha, estado de cuenta)
+   - Contrato / convenio
+   - Lista de productos/partidas de un proyecto
+   - Oficio de dependencia de gobierno
+3. Decide sector:
+   - gobierno: municipios, secretarías, organismos públicos, oficios, bases de licitación, anexos de concurso, claves de procedimiento, "invitación restringida", "licitación pública", etc.
+   - privado: empresas mercantiles, SA/SAPI/SRL, sin señales de dependencia pública.
+4. Decide intención operativa (campo intencion) — UNA sola, la más útil para el BOS.
+5. Extrae cliente y proveedor con nombres reales del documento. NUNCA inventes "Nuevo cliente".
+   - Si es anexo/licitación gobierno: el cliente suele ser la dependencia/organismo convocante.
+   - Si es cotización proveedor: proveedor = quien cotiza; cliente = a quien se cotiza (a menudo el dueño del proyecto).
+6. Monto: suma o total explícito del anexo/tabla. Si hay varias cifras, usa el TOTAL / importe económico.
+7. Proyecto: nombre de obra, procedimiento, oficio o anexo si aparece (ej. Ofic. 0782026, Planta Norte).
+8. Modalidad: proyecto (obras/anexos/licitaciones), venta_directa (suministro puntual), servicio (mantenimiento/consultoría).
+9. siguientePaso debe ser accionable en YLIKA (crear expediente gobierno, asociar como cobro, registrar OC, etc.).
+10. razonamiento: explica evidencias. Si algo no está claro, dilo y baja confianzaExtraccion.
 
-${textExcerpt ? `Contenido textual extraído (puede ser parcial):\n---\n${textExcerpt.slice(0, 12000)}\n---` : "El contenido multimodal del archivo está adjunto."}`;
+## Prohibido
+- Devolver cliente vacío o genérico si el PDF tiene un nombre de dependencia/empresa.
+- Clasificar todo como "Documento comercial".
+- Ignorar señales de gobierno en oficios/anexos.
+- Inventar montos redondos sin evidencia.
+
+Responde SOLO JSON válido según el schema.
+${textExcerpt ? `\nContenido textual parcial:\n---\n${textExcerpt.slice(0, 14000)}\n---` : "\nEl PDF/imagen multimodal está adjunto: léelo completo."}`;
 }
 
 export function guessMimeType(filename: string, fallback = "application/octet-stream") {
@@ -148,9 +242,36 @@ export function isMultimodalDocument(mime: string, filename: string) {
   );
 }
 
+export function labelIntencion(intencion?: IntencionOperativa): string {
+  const map: Record<IntencionOperativa, string> = {
+    cotizacion_venta: "Cotización de venta",
+    cotizacion_proveedor: "Cotización de proveedor",
+    orden_compra: "Orden de compra",
+    pedido_venta: "Pedido de venta",
+    factura_cliente: "Factura a cliente",
+    factura_proveedor: "Factura de proveedor",
+    cobro: "Cobro / ingreso",
+    pago: "Pago a proveedor",
+    contrato: "Contrato",
+    remision: "Remisión",
+    lista_productos: "Lista de productos / partidas",
+    anexo_economico: "Anexo económico",
+    licitacion: "Licitación / concurso",
+    correo_seguimiento: "Correo de seguimiento",
+    otro: "Otro documento",
+  };
+  return intencion ? map[intencion] : "Por clasificar";
+}
+
 type RawAiJson = {
   clasificacion?: string;
+  intencion?: string;
+  sector?: string;
+  modalidad?: string;
+  rolYlika?: string;
   resumen?: string;
+  razonamiento?: string;
+  siguientePaso?: string;
   proveedor?: string;
   cliente?: string;
   monto?: number;
@@ -162,10 +283,66 @@ type RawAiJson = {
   rfcReceptor?: string;
   riesgos?: string[];
   entidadesDetectadas?: string[];
+  partidas?: Array<{
+    descripcion: string;
+    cantidad?: number;
+    precio?: number;
+    total?: number;
+  }>;
   confianzaExtraccion?: number;
   expedienteCodigoSugerido?: string;
   confianzaMatch?: number;
 };
+
+const INTENCIONES: IntencionOperativa[] = [
+  "cotizacion_venta",
+  "cotizacion_proveedor",
+  "orden_compra",
+  "pedido_venta",
+  "factura_cliente",
+  "factura_proveedor",
+  "cobro",
+  "pago",
+  "contrato",
+  "remision",
+  "lista_productos",
+  "anexo_economico",
+  "licitacion",
+  "correo_seguimiento",
+  "otro",
+];
+
+function parseIntencion(raw?: string): IntencionOperativa {
+  const v = (raw || "").trim().toLowerCase().replace(/\s+/g, "_");
+  if (INTENCIONES.includes(v as IntencionOperativa)) {
+    return v as IntencionOperativa;
+  }
+  if (/anexo|econom/.test(v)) return "anexo_economico";
+  if (/licit|concurso|invitacion/.test(v)) return "licitacion";
+  if (/cotiz.*prov|proveedor/.test(v)) return "cotizacion_proveedor";
+  if (/cotiz/.test(v)) return "cotizacion_venta";
+  if (/cobr|spei|ingreso/.test(v)) return "cobro";
+  if (/pago|egreso/.test(v)) return "pago";
+  if (/factura.*prov|cfdi.*e/.test(v)) return "factura_proveedor";
+  if (/factura|cfdi/.test(v)) return "factura_cliente";
+  if (/orden|oc-/.test(v)) return "orden_compra";
+  if (/lista|partida|producto/.test(v)) return "lista_productos";
+  return "otro";
+}
+
+function parseSector(raw?: string, haystack = ""): "gobierno" | "privado" {
+  const s = (raw || "").toLowerCase();
+  if (s.startsWith("gob")) return "gobierno";
+  if (s.startsWith("priv")) return "privado";
+  if (
+    /gobierno|municipio|secretar|licitaci|oficio|dependencia|concurso|invitaci[oó]n|p[uú]blic/.test(
+      haystack,
+    )
+  ) {
+    return "gobierno";
+  }
+  return "privado";
+}
 
 export function normalizeAiResult(input: {
   archivo: string;
@@ -175,6 +352,59 @@ export function normalizeAiResult(input: {
   model?: string;
 }): DocumentoAiResultado {
   const { archivo, raw, expedientes, provider, model } = input;
+  const haystack = [
+    raw.clasificacion,
+    raw.resumen,
+    raw.razonamiento,
+    raw.cliente,
+    raw.proveedor,
+    raw.proyecto,
+    raw.concepto,
+    archivo,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const intencion = parseIntencion(raw.intencion || raw.clasificacion);
+  const sector = parseSector(raw.sector, haystack);
+  const modalidad =
+    raw.modalidad === "proyecto" ||
+    raw.modalidad === "servicio" ||
+    raw.modalidad === "venta_directa"
+      ? raw.modalidad
+      : /proyecto|obra|licit|anexo/.test(haystack.toLowerCase())
+        ? "proyecto"
+        : /servicio|manten/.test(haystack.toLowerCase())
+          ? "servicio"
+          : "venta_directa";
+
+  const rolYlika =
+    raw.rolYlika === "vendedor" ||
+    raw.rolYlika === "comprador" ||
+    raw.rolYlika === "interno" ||
+    raw.rolYlika === "indefinido"
+      ? raw.rolYlika
+      : intencion === "cotizacion_proveedor" ||
+          intencion === "orden_compra" ||
+          intencion === "factura_proveedor" ||
+          intencion === "pago"
+        ? "comprador"
+        : "vendedor";
+
+  let cliente = (raw.cliente || "").trim();
+  let proveedor = (raw.proveedor || "").trim();
+  // Evitar placeholders inútiles
+  if (/^nuevo cliente$/i.test(cliente) || /^cliente$/i.test(cliente)) {
+    cliente = "";
+  }
+  if (!cliente) {
+    // Heurística post-IA: entidades o proyecto
+    const ent = (raw.entidadesDetectadas || []).find(
+      (e) => e && !/^rfc/i.test(e) && e.length > 3,
+    );
+    if (ent) cliente = ent;
+  }
+
   const codigo = (raw.expedienteCodigoSugerido || "").trim().toUpperCase();
   const matched = expedientes.find(
     (e) => e.codigo.toUpperCase() === codigo,
@@ -183,21 +413,24 @@ export function normalizeAiResult(input: {
     matched ??
     matchExpedienteHeuristic(
       {
-        cliente: raw.cliente,
-        proveedor: raw.proveedor,
+        cliente,
+        proveedor,
         proyecto: raw.proyecto,
         concepto: raw.concepto,
         resumen: raw.resumen,
+        archivo,
       },
       expedientes,
     );
 
   const campos: Record<string, string | number> = {
     Archivo: archivo,
-    Clasificación: raw.clasificacion ?? "Documento",
+    Clasificación: raw.clasificacion ?? labelIntencion(intencion),
+    Intención: labelIntencion(intencion),
+    Sector: sector === "gobierno" ? "Gobierno" : "Privado",
   };
-  if (raw.proveedor) campos.Proveedor = raw.proveedor;
-  if (raw.cliente) campos.Cliente = raw.cliente;
+  if (cliente) campos.Cliente = cliente;
+  if (proveedor) campos.Proveedor = proveedor;
   if (raw.monto != null) campos.Monto = raw.monto;
   if (raw.moneda) campos.Moneda = raw.moneda;
   if (raw.concepto) campos.Concepto = raw.concepto;
@@ -208,10 +441,16 @@ export function normalizeAiResult(input: {
 
   return {
     archivo,
-    clasificacion: raw.clasificacion || "Documento comercial",
+    clasificacion: raw.clasificacion || labelIntencion(intencion),
+    intencion,
+    sector,
+    modalidad,
+    rolYlika,
     resumen: raw.resumen,
-    proveedor: raw.proveedor || undefined,
-    cliente: raw.cliente || undefined,
+    razonamiento: raw.razonamiento,
+    siguientePaso: raw.siguientePaso,
+    proveedor: proveedor || undefined,
+    cliente: cliente || undefined,
     monto: typeof raw.monto === "number" ? raw.monto : undefined,
     moneda: raw.moneda || "MXN",
     concepto: raw.concepto || undefined,
@@ -221,6 +460,7 @@ export function normalizeAiResult(input: {
     rfcReceptor: raw.rfcReceptor || undefined,
     riesgos: raw.riesgos?.filter(Boolean) ?? [],
     entidadesDetectadas: raw.entidadesDetectadas?.filter(Boolean) ?? [],
+    partidas: raw.partidas?.filter((p) => p?.descripcion) ?? [],
     confianzaExtraccion: clamp01(raw.confianzaExtraccion ?? 0.6),
     provider,
     model,
@@ -231,7 +471,7 @@ export function normalizeAiResult(input: {
           confianza: clamp01(
             matched
               ? (raw.confianzaMatch ?? 0.85)
-              : (fuzzy as { confianza?: number }).confianza ?? 0.55,
+              : ((fuzzy as { confianza?: number }).confianza ?? 0.55),
           ),
         }
       : undefined,
@@ -311,12 +551,25 @@ export function parseCfdiXml(
   const desc =
     xml.match(/Descripcion="([^"]+)"/i)?.[1] ||
     xml.match(/Descripción="([^"]+)"/i)?.[1];
+  const tipoComp = attr("(?:cfdi:)?Comprobante", "TipoDeComprobante");
+  const intencion: IntencionOperativa =
+    tipoComp === "E" ? "factura_proveedor" : "factura_cliente";
 
   const raw = {
     clasificacion: "Factura / CFDI",
+    intencion,
+    sector: "privado",
+    modalidad: "venta_directa",
+    rolYlika: tipoComp === "E" ? "comprador" : "vendedor",
     resumen: `CFDI de ${emisor || "emisor"} hacia ${receptor || "receptor"}${
       Number.isFinite(total) ? ` por $${total.toLocaleString("es-MX")}` : ""
     }. ${desc ? `Concepto: ${desc}.` : ""}`.trim(),
+    razonamiento:
+      "Documento XML CFDI parseado localmente: se leyeron Emisor, Receptor, Total y conceptos del comprobante fiscal.",
+    siguientePaso:
+      tipoComp === "E"
+        ? "Asociar como factura de proveedor y registrar recepción."
+        : "Asociar como factura a cliente y preparar cobro.",
     proveedor: emisor,
     cliente: receptor,
     monto: Number.isFinite(total) ? total : undefined,
@@ -355,13 +608,52 @@ export function heuristicAnalyze(input: {
   if (cfdi) return cfdi;
 
   const lower = `${archivo}\n${text}`.toLowerCase();
-  let clasificacion = "Documento comercial";
-  if (/factura|cfdi|uuid/.test(lower)) clasificacion = "Factura / CFDI";
-  else if (/cotiz|quote|propuesta/.test(lower)) clasificacion = "Cotización";
-  else if (/orden de compra|\boc\b|purchase order/.test(lower))
+  let intencion: IntencionOperativa = "otro";
+  let clasificacion = "Documento sin análisis Gemini";
+  let sector: "gobierno" | "privado" = "privado";
+
+  if (/anexo\s*econ|anexo_econ|econ[oó]mico/.test(lower)) {
+    intencion = "anexo_economico";
+    clasificacion = "Anexo económico";
+  } else if (/licit|concurso|invitaci[oó]n\s+restringida|bases\s+de/.test(lower)) {
+    intencion = "licitacion";
+    clasificacion = "Licitación / concurso";
+  } else if (/factura|cfdi|uuid/.test(lower)) {
+    intencion = "factura_cliente";
+    clasificacion = "Factura / CFDI";
+  } else if (/cotiz|quote|propuesta/.test(lower)) {
+    intencion = /prov/.test(lower) ? "cotizacion_proveedor" : "cotizacion_venta";
+    clasificacion = intencion === "cotizacion_proveedor"
+      ? "Cotización de proveedor"
+      : "Cotización de venta";
+  } else if (/orden de compra|\boc\b|purchase order/.test(lower)) {
+    intencion = "orden_compra";
     clasificacion = "Orden de compra";
-  else if (/contrato|clausul/.test(lower)) clasificacion = "Contrato";
-  else if (/remisi/.test(lower)) clasificacion = "Remisión";
+  } else if (/cobr|spei|pago\s+recibido/.test(lower)) {
+    intencion = "cobro";
+    clasificacion = "Comprobante de cobro";
+  } else if (/lista|partida|producto/.test(lower)) {
+    intencion = "lista_productos";
+    clasificacion = "Lista de productos";
+  }
+
+  if (
+    /gobierno|municipio|secretar|oficio|licitaci|dependencia|p[uú]blic|concurso/.test(
+      lower,
+    ) ||
+    /ofic\.|oficio/.test(lower)
+  ) {
+    sector = "gobierno";
+  }
+
+  // Intentar nombre desde filename
+  const oficio =
+    archivo.match(/ofic\.?\s*([0-9/-]+)/i)?.[1] ||
+    archivo.match(/(\d{5,})/)?.[1];
+  const proyecto =
+    /anexo/i.test(archivo)
+      ? `Anexo económico${oficio ? ` Ofic. ${oficio}` : ""}`
+      : undefined;
 
   const montoMatch = text.match(
     /(?:total|monto|importe|\$)\s*[:=]?\s*\$?\s*([\d,.]+)/i,
@@ -375,34 +667,38 @@ export function heuristicAnalyze(input: {
     text.match(/emisor[:\s]+([^\n,]+)/i)?.[1]?.trim();
   const cliente =
     text.match(/cliente[:\s]+([^\n,]+)/i)?.[1]?.trim() ||
-    text.match(/receptor[:\s]+([^\n,]+)/i)?.[1]?.trim();
-  const concepto =
-    text.match(/concepto[:\s]+([^\n]+)/i)?.[1]?.trim() ||
-    text.match(/descripci[oó]n[:\s]+([^\n]+)/i)?.[1]?.trim();
+    text.match(/receptor[:\s]+([^\n,]+)/i)?.[1]?.trim() ||
+    text.match(/convocante[:\s]+([^\n,]+)/i)?.[1]?.trim();
 
   const fuzzy = matchExpedienteHeuristic(
-    { cliente, proveedor, concepto, archivo, resumen: text.slice(0, 400) },
+    { cliente, proveedor, concepto: clasificacion, archivo, resumen: text.slice(0, 400) },
     expedientes,
   );
 
   const raw = {
     clasificacion,
-    resumen: `Análisis local de ${archivo} (${Math.max(1, Math.round(size / 1024))} KB). Clasificado como ${clasificacion}. ${
-      text
-        ? "Se extrajo texto del archivo; configura Gemini para un análisis multimodal completo (PDF/imagen)."
-        : "Sin texto extraíble; configura una API key de Gemini para OCR y comprensión documental."
-    }`,
+    intencion,
+    sector,
+    modalidad: sector === "gobierno" || intencion === "anexo_economico"
+      ? "proyecto"
+      : "venta_directa",
+    resumen: `Análisis LOCAL limitado de ${archivo}. Sin Gemini no se puede leer el PDF multimodal. Configura la API key para extraer cliente, sector y partidas reales.`,
+    razonamiento:
+      "No hubo llamada a Gemini. Solo se usaron el nombre del archivo y texto extraíble. Un anexo económico en PDF requiere visión multimodal.",
+    siguientePaso:
+      "Configura Gemini (API key) y vuelve a analizar el mismo archivo antes de crear el expediente.",
     proveedor,
     cliente,
     monto: Number.isFinite(monto) ? monto : undefined,
     moneda: "MXN",
-    concepto,
+    concepto: clasificacion,
+    proyecto,
     riesgos: [
-      "Modo heurístico: precisión limitada sin Gemini",
-      !text ? "No se pudo leer contenido textual del archivo" : "",
+      "Gemini no ejecutó el análisis — resultado incompleto",
+      !text ? "PDF/imagen sin texto extraíble en modo local" : "",
     ].filter(Boolean),
     entidadesDetectadas: [proveedor, cliente].filter(Boolean) as string[],
-    confianzaExtraccion: text ? 0.45 : 0.25,
+    confianzaExtraccion: text ? 0.2 : 0.1,
     expedienteCodigoSugerido: fuzzy?.codigo,
     confianzaMatch: fuzzy?.confianza,
   };

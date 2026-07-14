@@ -137,6 +137,7 @@ export interface Cliente {
 
 export {
   DOCUMENT_ANALYSIS_MODEL,
+  DOCUMENT_ANALYSIS_MODEL_FAST,
   DOCUMENT_ANALYSIS_JSON_SCHEMA,
   buildDocumentAnalysisPrompt,
   guessMimeType,
@@ -145,9 +146,11 @@ export {
   matchExpedienteHeuristic,
   parseCfdiXml,
   heuristicAnalyze,
+  labelIntencion,
   type DocumentoAiProvider,
   type DocumentoAiResultado,
   type ExpedienteMatchHint,
+  type IntencionOperativa,
 } from "./document-analysis";
 
 export function formatCurrency(value: number): string {

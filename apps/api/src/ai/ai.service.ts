@@ -4,6 +4,7 @@ import { generateObject } from 'ai';
 import { z } from 'zod';
 import {
   DOCUMENT_ANALYSIS_MODEL,
+  DOCUMENT_ANALYSIS_MODEL_FAST,
   buildDocumentAnalysisPrompt,
   guessMimeType,
   heuristicAnalyze,
@@ -15,7 +16,13 @@ import {
 
 const analysisSchema = z.object({
   clasificacion: z.string(),
+  intencion: z.string(),
+  sector: z.string(),
+  modalidad: z.string().optional(),
+  rolYlika: z.string().optional(),
   resumen: z.string(),
+  razonamiento: z.string(),
+  siguientePaso: z.string(),
   proveedor: z.string().optional(),
   cliente: z.string().optional(),
   monto: z.number().optional(),
@@ -27,6 +34,16 @@ const analysisSchema = z.object({
   rfcReceptor: z.string().optional(),
   riesgos: z.array(z.string()).optional(),
   entidadesDetectadas: z.array(z.string()).optional(),
+  partidas: z
+    .array(
+      z.object({
+        descripcion: z.string(),
+        cantidad: z.number().optional(),
+        precio: z.number().optional(),
+        total: z.number().optional(),
+      }),
+    )
+    .optional(),
   confianzaExtraccion: z.number(),
   expedienteCodigoSugerido: z.string().optional(),
   confianzaMatch: z.number().optional(),
@@ -62,77 +79,85 @@ export class AiService {
       });
     }
 
-    try {
-      const google = createGoogleGenerativeAI({ apiKey });
-      const prompt = buildDocumentAnalysisPrompt(
-        input.filename,
-        expedientes,
-        input.textHint,
-      );
+    const google = createGoogleGenerativeAI({ apiKey });
+    const prompt = buildDocumentAnalysisPrompt(
+      input.filename,
+      expedientes,
+      input.textHint,
+    );
+    const multimodal = isMultimodalDocument(mime, input.filename);
+    const models = [DOCUMENT_ANALYSIS_MODEL, DOCUMENT_ANALYSIS_MODEL_FAST];
 
-      const multimodal = isMultimodalDocument(mime, input.filename);
-      const result = await generateObject({
-        model: google(DOCUMENT_ANALYSIS_MODEL),
-        schema: analysisSchema,
-        messages: [
-          {
-            role: 'user',
-            content: multimodal
-              ? [
-                  { type: 'text', text: prompt },
-                  {
-                    type: 'file',
-                    data: input.buffer,
-                    mediaType: mime,
-                  },
-                ]
-              : [
-                  {
-                    type: 'text',
-                    text: `${prompt}\n\n---\n${
-                      input.textHint ||
-                      input.buffer.toString('utf8').slice(0, 12000)
-                    }\n---`,
-                  },
-                ],
-          },
-        ],
-      });
+    let lastError: unknown;
+    for (const modelId of models) {
+      try {
+        const result = await generateObject({
+          model: google(modelId),
+          schema: analysisSchema,
+          messages: [
+            {
+              role: 'user',
+              content: multimodal
+                ? [
+                    { type: 'text', text: prompt },
+                    {
+                      type: 'file',
+                      data: input.buffer,
+                      mediaType: mime,
+                    },
+                  ]
+                : [
+                    {
+                      type: 'text',
+                      text: `${prompt}\n\n---\n${
+                        input.textHint ||
+                        input.buffer.toString('utf8').slice(0, 14000)
+                      }\n---`,
+                    },
+                  ],
+            },
+          ],
+        });
 
-      return normalizeAiResult({
-        archivo: input.filename,
-        raw: result.object,
-        expedientes,
-        provider: 'gemini',
-        model: DOCUMENT_ANALYSIS_MODEL,
-      });
-    } catch (err) {
-      this.logger.error(
-        `Gemini falló, fallback local: ${
-          err instanceof Error ? err.message : String(err)
-        }`,
-      );
-      const fallback = heuristicAnalyze({
-        archivo: input.filename,
-        text:
-          input.textHint ||
-          (mime.includes('xml') || mime.startsWith('text/')
-            ? input.buffer.toString('utf8')
-            : undefined),
-        size: input.buffer.length,
-        expedientes,
-      });
-      return {
-        ...fallback,
-        riesgos: [
-          ...(fallback.riesgos ?? []),
-          'Gemini no disponible; resultado local',
-        ],
-      };
+        return normalizeAiResult({
+          archivo: input.filename,
+          raw: result.object,
+          expedientes,
+          provider: 'gemini',
+          model: modelId,
+        });
+      } catch (err) {
+        lastError = err;
+        this.logger.warn(
+          `${modelId} falló: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
     }
+
+    this.logger.error(
+      `Gemini falló, fallback local: ${
+        lastError instanceof Error ? lastError.message : String(lastError)
+      }`,
+    );
+    const fallback = heuristicAnalyze({
+      archivo: input.filename,
+      text:
+        input.textHint ||
+        (mime.includes('xml') || mime.startsWith('text/')
+          ? input.buffer.toString('utf8')
+          : undefined),
+      size: input.buffer.length,
+      expedientes,
+    });
+    return {
+      ...fallback,
+      riesgos: [
+        ...(fallback.riesgos ?? []),
+        'Gemini no disponible; resultado local',
+      ],
+    };
   }
 
-  /** Compat: clasificación solo por nombre */
   classifyDocument(filename: string) {
     return heuristicAnalyze({
       archivo: filename || 'documento.pdf',

@@ -44,45 +44,51 @@ import {
 } from "@/components/ui/select";
 import {
   analyzeDocument,
+  GeminiRequiredError,
   getGeminiApiKey,
   isAllowedDocument,
   setGeminiApiKey,
 } from "@/lib/ai-ingest";
 import { expedienteHref } from "@/lib/routes";
 import { useYlikaStore } from "@/lib/store";
+import { labelIntencion } from "@ylika/shared";
 
 type Step = "drop" | "analyzing" | "result" | "create";
 
 function defaultsFromDoc(doc: DocumentoAiResultado) {
   const clienteNombre =
     doc.cliente?.trim() ||
-    (doc.proyecto && /planta|norte|bimbo|shamosh|cemex/i.test(doc.proyecto)
-      ? doc.proyecto
-      : "") ||
+    doc.entidadesDetectadas?.find(
+      (e) => e.length > 4 && !/^rfc|\d{10,}/i.test(e),
+    ) ||
+    doc.proyecto?.trim() ||
     doc.proveedor?.trim() ||
-    "Nuevo cliente";
+    "";
 
   const expedienteNombre =
     doc.proyecto?.trim() ||
+    (doc.intencion === "anexo_economico" || doc.intencion === "licitacion"
+      ? doc.clasificacion
+      : "") ||
     doc.concepto?.trim() ||
-    `${doc.clasificacion} · ${doc.archivo}`.slice(0, 80);
+    doc.clasificacion;
 
-  const lower = `${doc.clasificacion} ${doc.concepto} ${doc.resumen}`.toLowerCase();
-  const tipo: ExpedienteTipo = /proyecto|obra|planta/.test(lower)
-    ? "proyecto"
-    : /servicio|mantenimiento|soporte/.test(lower)
-      ? "servicio"
-      : "venta_directa";
+  const tipo: ExpedienteTipo =
+    doc.modalidad ||
+    (doc.intencion === "anexo_economico" ||
+    doc.intencion === "licitacion" ||
+    doc.sector === "gobierno"
+      ? "proyecto"
+      : doc.intencion === "lista_productos"
+        ? "proyecto"
+        : "venta_directa");
 
-  const sector: SectorTipo =
-    /gobierno|público|publica|municipio|secretaria/.test(lower)
-      ? "gobierno"
-      : "privado";
+  const sector: SectorTipo = doc.sector || "privado";
 
   return {
     clienteNombre,
     expedienteNombre,
-    valor: String(doc.monto && doc.monto > 0 ? doc.monto : ""),
+    valor: String(doc.monto && doc.monto > 0 ? Math.round(doc.monto) : ""),
     rfc: doc.rfcReceptor || doc.rfcEmisor || "",
     tipo,
     sector,
@@ -161,6 +167,15 @@ export function DocumentIngestDialog({
       toast.error("Formato no soportado. Usa PDF, XML, Excel, imagen o correo.");
       return;
     }
+    if (
+      !getGeminiApiKey() &&
+      !process.env.NEXT_PUBLIC_API_URL &&
+      /\.pdf$/i.test(file.name)
+    ) {
+      toast.error("Configura Gemini (API key) para analizar PDFs");
+      onOpenKey();
+      return;
+    }
     setStep("analyzing");
     try {
       const hints = expedientes.map((e) => ({
@@ -171,17 +186,27 @@ export function DocumentIngestDialog({
       const analyzed = await analyzeDocument(file, hints);
       setResult(analyzed);
       setStep("result");
-      const engine =
-        analyzed.provider === "gemini"
-          ? `Gemini (${analyzed.model ?? "flash"})`
-          : analyzed.provider === "api"
-            ? "API YLIKA"
-            : analyzed.provider === "local"
-              ? "Parser CFDI"
-              : "Análisis local";
-      toast.success(`Analizado con ${engine}`);
-    } catch {
-      toast.error("No se pudo analizar el documento");
+      if (analyzed.provider === "gemini" || analyzed.provider === "api") {
+        toast.success(
+          `Gemini analizó el documento (${analyzed.model ?? "pro"})`,
+        );
+      } else if (analyzed.provider === "local") {
+        toast.success("CFDI parseado localmente");
+      } else {
+        toast.message("Análisis limitado", {
+          description: "Configura Gemini para extracción completa",
+        });
+      }
+    } catch (e) {
+      if (e instanceof GeminiRequiredError) {
+        toast.error(e.message);
+        setStep("drop");
+        onOpenKey();
+        return;
+      }
+      toast.error(
+        e instanceof Error ? e.message : "No se pudo analizar el documento",
+      );
       setStep("drop");
     }
   };
@@ -223,7 +248,9 @@ export function DocumentIngestDialog({
   const create = () => {
     if (!result) return;
     if (!clienteNombre.trim()) {
-      toast.error("Indica el nombre del cliente");
+      toast.error(
+        "Falta el cliente. Si Gemini no lo extrajo, escribe el nombre de la dependencia o empresa.",
+      );
       return;
     }
     if (!expedienteNombre.trim()) {
@@ -459,6 +486,51 @@ export function DocumentIngestDialog({
                   </p>
                 )}
 
+                <div className="mb-3 grid grid-cols-2 gap-2 text-xs">
+                  <div className="rounded-lg bg-secondary/60 px-2.5 py-2">
+                    <p className="text-muted-foreground">Intención</p>
+                    <p className="font-medium">
+                      {labelIntencion(result.intencion)}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-secondary/60 px-2.5 py-2">
+                    <p className="text-muted-foreground">Sector</p>
+                    <p className="font-medium">
+                      {result.sector === "gobierno" ? "Gobierno" : "Privado"}
+                    </p>
+                  </div>
+                  <div className="rounded-lg bg-secondary/60 px-2.5 py-2 col-span-2">
+                    <p className="text-muted-foreground">Siguiente paso</p>
+                    <p className="font-medium">
+                      {result.siguientePaso || "Revisar y crear expediente"}
+                    </p>
+                  </div>
+                </div>
+
+                {result.razonamiento && (
+                  <details className="mb-3 rounded-lg border border-border/70 bg-secondary/30 px-3 py-2 text-xs">
+                    <summary className="cursor-pointer font-medium text-muted-foreground">
+                      Razonamiento de la IA
+                    </summary>
+                    <p className="mt-2 leading-relaxed text-foreground/80 whitespace-pre-wrap">
+                      {result.razonamiento}
+                    </p>
+                  </details>
+                )}
+
+                {(result.provider === "heuristic" ||
+                  (result.confianzaExtraccion != null &&
+                    result.confianzaExtraccion < 0.35)) && (
+                  <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-200/80 bg-amber-50/80 p-3 text-xs text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-300">
+                    <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
+                    <p>
+                      Este resultado no es un análisis multimodal completo.
+                      Configura Gemini (API key) y vuelve a subir el PDF para
+                      extraer cliente, sector y partidas reales.
+                    </p>
+                  </div>
+                )}
+
                 <dl className="grid grid-cols-2 gap-3 text-sm">
                   {result.proveedor && (
                     <div>
@@ -562,22 +634,37 @@ export function DocumentIngestDialog({
               className="space-y-4"
             >
               <p className="text-sm text-muted-foreground">
-                Revisa los datos extraídos de{" "}
+                Revisa los datos de{" "}
                 <span className="font-medium text-foreground">
                   {result.archivo}
-                </span>{" "}
-                y confirma. Se creará el cliente (si no existe), el expediente y
-                se asociará el documento.
+                </span>
+                {result.intencion && (
+                  <>
+                    {" "}
+                    ·{" "}
+                    <span className="text-ylika-teal">
+                      {labelIntencion(result.intencion)}
+                    </span>
+                  </>
+                )}
+                . Se creará el cliente (si no existe), el expediente y se
+                asociará el documento.
               </p>
 
               <div className="space-y-2">
-                <Label htmlFor="doc-cli">Cliente</Label>
+                <Label htmlFor="doc-cli">Cliente / dependencia</Label>
                 <Input
                   id="doc-cli"
                   value={clienteNombre}
                   onChange={(e) => setClienteNombre(e.target.value)}
-                  placeholder="Nombre del cliente"
+                  placeholder="Nombre real extraído o capturado"
                 />
+                {!clienteNombre && (
+                  <p className="text-xs text-amber-600">
+                    Gemini no trajo cliente — captura el nombre del convocante o
+                    empresa del documento.
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="doc-rfc">RFC (opcional)</Label>
