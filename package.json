@@ -1,0 +1,17 @@
+{
+  "name": "ylika",
+  "private": true,
+  "version": "0.1.0",
+  "description": "YLIKA — Business Operating System centrado en Expedientes de Negocio",
+  "scripts": {
+    "dev": "pnpm --parallel --filter web --filter api dev",
+    "dev:web": "pnpm --filter web dev",
+    "dev:api": "pnpm --filter api start:dev",
+    "build": "pnpm --filter web --filter api build",
+    "lint": "pnpm --filter web --filter api lint"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.33.3"
+}
