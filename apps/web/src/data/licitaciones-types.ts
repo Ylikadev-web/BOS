@@ -6,10 +6,10 @@ export type LicitacionCategoria =
   | "otros";
 
 export type LicitacionDocumento = {
-  tipo: "portal" | "pdf" | "dataset";
+  tipo: "convocatoria" | "portal" | "anexo" | "dataset";
   label: string;
   url: string;
-  formato: "portal" | "pdf" | "csv" | "xlsx" | "zip";
+  formato: "pdf" | "portal" | "csv" | "xlsx" | "zip";
 };
 
 export type LicitacionItem = {
@@ -24,11 +24,20 @@ export type LicitacionItem = {
   tipoContratacion: string;
   caracter: string;
   entidad: string;
+  /** ISO date YYYY-MM-DD */
   fechaPublicacion: string;
-  vigencia: string;
+  /** ISO date — junta de aclaraciones (si aplica) */
+  fechaJunta?: string;
+  /** ISO date — presentación y apertura (criterio de “aún no inicia”) */
+  fechaApertura: string;
+  /** ISO date — fallo estimado */
+  fechaFallo?: string;
   ley: string;
   ordenGobierno: string;
-  urlPortal: string;
+  /** URL del PDF oficial de convocatoria (documento principal) */
+  urlDocumentoOficial: string;
+  /** Expediente en portal público, si existe */
+  urlPortal?: string;
   uuid?: string;
   fuente: string;
   documentos: LicitacionDocumento[];

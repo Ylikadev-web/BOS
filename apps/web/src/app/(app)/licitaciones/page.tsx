@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   Building2,
+  Calendar,
   Download,
   ExternalLink,
   FileText,
@@ -20,7 +21,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   LICITACION_CATEGORIES,
   LICITACION_FUENTES,
-  licitacionesSeed,
+  formatFechaCorta,
+  licitacionesNoIniciadas,
   type LicitacionCategoria,
   type LicitacionItem,
 } from "@/data/licitaciones";
@@ -32,9 +34,11 @@ export default function LicitacionesPage() {
   const [q, setQ] = useState("");
   const [soloLicitacion, setSoloLicitacion] = useState(false);
 
+  const upcoming = useMemo(() => licitacionesNoIniciadas(), []);
+
   const items = useMemo(() => {
     const query = q.trim().toLowerCase();
-    return licitacionesSeed.filter((item) => {
+    return upcoming.filter((item) => {
       if (categoria !== "todas" && item.categoria !== categoria) return false;
       if (
         soloLicitacion &&
@@ -55,16 +59,16 @@ export default function LicitacionesPage() {
         .toLowerCase();
       return hay.includes(query);
     });
-  }, [categoria, q, soloLicitacion]);
+  }, [categoria, q, soloLicitacion, upcoming]);
 
   const counts = useMemo(() => {
-    const map: Record<string, number> = { todas: licitacionesSeed.length };
+    const map: Record<string, number> = { todas: upcoming.length };
     for (const c of LICITACION_CATEGORIES) {
       if (c.id === "todas") continue;
-      map[c.id] = licitacionesSeed.filter((i) => i.categoria === c.id).length;
+      map[c.id] = upcoming.filter((i) => i.categoria === c.id).length;
     }
     return map;
-  }, []);
+  }, [upcoming]);
 
   const copy = async (url: string) => {
     try {
@@ -83,11 +87,14 @@ export default function LicitacionesPage() {
             Licitaciones
           </p>
           <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight">
-            Contrataciones públicas
+            Procedimientos que aún no inician
           </h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">
-            Procedimientos reales de Compras MX (datos abiertos), agrupados por
-            categoría, con enlace directo al expediente público oficial.
+            Solo convocatorias con{" "}
+            <span className="font-medium text-foreground">
+              documento oficial en PDF
+            </span>{" "}
+            y apertura de proposiciones todavía pendiente.
           </p>
         </div>
         <Button asChild variant="outline" className="gap-2">
@@ -107,16 +114,18 @@ export default function LicitacionesPage() {
         <Info className="mt-0.5 size-4 shrink-0 text-ylika-teal" />
         <div className="space-y-1 text-muted-foreground">
           <p>
-            <span className="font-medium text-foreground">Sobre los PDF:</span>{" "}
-            Compras MX no publica URLs permanentes de PDF sin pasar por su
-            portal (API con captcha). Lo que sí podemos darte es el{" "}
+            <span className="font-medium text-foreground">Criterio:</span> se
+            listan procedimientos cuya fecha de presentación/apertura es
+            posterior a hoy. Cada ficha incluye el{" "}
             <span className="font-medium text-foreground">
-              link directo al expediente público
+              PDF oficial de la convocatoria
             </span>{" "}
-            — ahí ves y descargas convocatoria, anexos y actas.
+            publicado por la dependencia (no el portal con captcha).
           </p>
           <p>
-            Los CSV de datos abiertos sí son descarga directa (abajo).
+            Compras MX no expone URLs permanentes de PDF sin captcha; por eso
+            priorizamos repositorios institucionales verificados (INE, INER,
+            etc.).
           </p>
         </div>
       </div>
@@ -169,7 +178,8 @@ export default function LicitacionesPage() {
       <div className="grid gap-3">
         {items.length === 0 && (
           <p className="rounded-2xl border border-border/80 bg-card p-6 text-sm text-muted-foreground">
-            No hay procedimientos con ese filtro.
+            No hay procedimientos sin iniciar con ese filtro. Cuando caduque la
+            apertura, desaparecen de esta lista.
           </p>
         )}
         {items.map((item) => (
@@ -179,10 +189,10 @@ export default function LicitacionesPage() {
 
       <section className="space-y-3 pt-4">
         <h2 className="font-[family-name:var(--font-display)] text-xl font-semibold tracking-tight">
-          Fuentes y descargas oficiales
+          Fuentes oficiales
         </h2>
         <p className="text-sm text-muted-foreground">
-          Portales y datasets a los que YLIKA pudo acceder públicamente.
+          Sitios donde se publican convocatorias con PDF descargable.
         </p>
         <div className="grid gap-3 md:grid-cols-2">
           {LICITACION_FUENTES.map((f) => (
@@ -208,11 +218,6 @@ export default function LicitacionesPage() {
                   <p className="mt-1 text-sm text-muted-foreground">
                     {f.descripcion}
                   </p>
-                  {f.formato && (
-                    <Badge variant="secondary" className="mt-2 uppercase">
-                      {f.formato}
-                    </Badge>
-                  )}
                 </div>
                 <ExternalLink className="size-3.5 shrink-0 text-muted-foreground" />
               </div>
@@ -231,11 +236,19 @@ function LicitacionRow({
   item: LicitacionItem;
   onCopy: (url: string) => void;
 }) {
+  const pdf =
+    item.documentos.find((d) => d.formato === "pdf" && d.tipo === "convocatoria")
+      ?.url ?? item.urlDocumentoOficial;
+  const portal = item.urlPortal;
+
   return (
     <article className="rounded-2xl border border-border/80 bg-card p-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0 space-y-2">
+        <div className="min-w-0 space-y-3">
           <div className="flex flex-wrap items-center gap-2">
+            <Badge className="bg-emerald-500/15 text-emerald-700 hover:bg-emerald-500/15 dark:text-emerald-400">
+              Sin iniciar apertura
+            </Badge>
             <Badge
               variant="secondary"
               className="capitalize bg-ylika-teal-soft text-ylika-teal hover:bg-ylika-teal-soft"
@@ -263,32 +276,58 @@ function LicitacionRow({
           </p>
           <p className="font-mono text-xs text-muted-foreground">
             {item.codigo}
-            {item.referencia ? ` · ${item.referencia}` : ""}
-            {item.fechaPublicacion
-              ? ` · Pub. ${item.fechaPublicacion.slice(0, 10)}`
+            {item.referencia && item.referencia !== item.codigo
+              ? ` · ${item.referencia}`
               : ""}
           </p>
+
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <Calendar className="size-3.5" />
+              Pub. {formatFechaCorta(item.fechaPublicacion)}
+            </span>
+            {item.fechaJunta && (
+              <span>Junta {formatFechaCorta(item.fechaJunta)}</span>
+            )}
+            <span className="font-medium text-foreground">
+              Apertura {formatFechaCorta(item.fechaApertura)}
+            </span>
+            {item.fechaFallo && (
+              <span>Fallo est. {formatFechaCorta(item.fechaFallo)}</span>
+            )}
+          </div>
+
           {item.uc && (
             <p className="text-xs text-muted-foreground">UC: {item.uc}</p>
           )}
+          <p className="text-xs text-muted-foreground">{item.fuente}</p>
         </div>
 
         <div className="flex shrink-0 flex-wrap gap-2 lg:flex-col lg:items-stretch">
           <Button asChild className="gap-2 bg-ylika-teal hover:bg-ylika-teal/90">
-            <a href={item.urlPortal} target="_blank" rel="noreferrer">
+            <a href={pdf} target="_blank" rel="noreferrer">
               <FileText className="size-4" />
-              Ver / descargar PDFs
-              <ExternalLink className="size-3.5 opacity-80" />
+              Documento oficial (PDF)
+              <Download className="size-3.5 opacity-80" />
             </a>
           </Button>
+          {portal && (
+            <Button asChild variant="outline" className="gap-2">
+              <a href={portal} target="_blank" rel="noreferrer">
+                <Landmark className="size-4" />
+                Portal
+                <ExternalLink className="size-3.5 opacity-70" />
+              </a>
+            </Button>
+          )}
           <Button
             type="button"
             variant="outline"
             className="gap-2"
-            onClick={() => onCopy(item.urlPortal)}
+            onClick={() => onCopy(pdf)}
           >
             <Link2 className="size-4" />
-            Copiar enlace
+            Copiar PDF
           </Button>
         </div>
       </div>
