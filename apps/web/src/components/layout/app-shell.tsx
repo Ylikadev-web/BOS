@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   BriefcaseBusiness,
@@ -16,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { DocumentIngestDialog } from "@/components/ai/document-ingest-dialog";
+import { YlikaMark } from "@/components/layout/ylika-mark";
 import { useState } from "react";
 
 const nav = [
@@ -36,13 +36,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-40 border-b border-border/70 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-[1600px] items-center gap-6 px-4 sm:px-6">
           <Link href="/workspace" className="flex items-center gap-2.5 shrink-0">
-            <Image
-              src="/ylika-logo.png"
-              alt="YLIKA"
-              width={28}
-              height={28}
-              className="rounded-md"
-            />
+            <YlikaMark className="size-7" />
             <span className="font-[family-name:var(--font-display)] text-lg font-bold tracking-tight text-foreground">
               YLIKA
             </span>
