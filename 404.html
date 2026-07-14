@@ -1,0 +1,11 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>YLIKA</title>
+<script>
+(function(){
+  var p=location.pathname;
+  var m=p.match(/\/operaciones\/(EXP-[A-Za-z0-9-]+)\/?$/i);
+  var base=p.indexOf('/BOS/')>=0||p.endsWith('/BOS')||p.indexOf('/BOS/')!==-1?'/BOS':'';
+  if(p.indexOf('/BOS')===0) base='/BOS';
+  if(m){ location.replace(base+'/operaciones/ver/?codigo='+encodeURIComponent(m[1])); return; }
+  location.replace(base+'/workspace/');
+})();
+</script></head><body></body></html>
